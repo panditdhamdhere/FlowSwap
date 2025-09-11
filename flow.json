@@ -1,0 +1,64 @@
+{
+  "accounts": {
+    "emulator-account": {
+      "address": "0xf8d6e0586b0a20c7",
+      "key": "emulator-account"
+    },
+    "testnet-account": {
+      "address": "0xTESTNETACCOUNT",
+      "key": "<replace-with-key>"
+    }
+  },
+  "contracts": {
+    "FungibleToken": {
+      "source": "https://raw.githubusercontent.com/onflow/flow-ft/master/contracts/FungibleToken.cdc",
+      "aliases": {
+        "emulator": "0xee82856bf20e2aa6",
+        "testnet": "0x9a0766d93b6608b7"
+      }
+    },
+    "TestToken": {
+      "source": "./cadence/contracts/TestToken.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0xTESTNETACCOUNT"
+      }
+    },
+    "TestToken2": {
+      "source": "./cadence/contracts/TestToken2.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0xTESTNETACCOUNT"
+      }
+    },
+    "DexPair": {
+      "source": "./cadence/contracts/DexPair.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0xTESTNETACCOUNT"
+      }
+    },
+    "DexFactory": {
+      "source": "./cadence/contracts/DexFactory.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0xTESTNETACCOUNT"
+      }
+    },
+    "DexRouter": {
+      "source": "./cadence/contracts/DexRouter.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0xTESTNETACCOUNT"
+      }
+    }
+  },
+  "deployments": {
+    "emulator": {
+      "emulator-account": ["TestToken", "TestToken2", "DexFactory", "DexPair", "DexRouter"]
+    },
+    "testnet": {
+      "testnet-account": ["TestToken", "TestToken2", "DexFactory", "DexPair", "DexRouter"]
+    }
+  }
+}
