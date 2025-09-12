@@ -1,9 +1,9 @@
 import * as fcl from '@onflow/fcl'
 
 const MINT_TOKENS_TX = `
-import FungibleToken from 0xFungibleToken
-import TestToken from 0xTestToken
-import TestToken2 from 0xTestToken2
+ import FungibleToken from 0x9a0766d93b6608b7
+import TestToken from 0x8c85caf1772e27b7
+import TestToken2 from 0x8c85caf1772e27b7
 
 transaction(amount1: UFix64, amount2: UFix64) {
     prepare(acct: AuthAccount) {
@@ -18,10 +18,10 @@ transaction(amount1: UFix64, amount2: UFix64) {
 `
 
 const ADD_LIQUIDITY_TX = `
-import FungibleToken from 0xFungibleToken
-import DexRouter from 0xDexRouter
-import TestToken from 0xTestToken
-import TestToken2 from 0xTestToken2
+import FungibleToken from 0x9a0766d93b6608b7
+import DexRouter from 0x8c85caf1772e27b7
+import TestToken from 0x8c85caf1772e27b7
+import TestToken2 from 0x8c85caf1772e27b7
 
 transaction(id: String, amountA: UFix64, amountB: UFix64) {
     prepare(acct: AuthAccount) {
@@ -37,10 +37,10 @@ transaction(id: String, amountA: UFix64, amountB: UFix64) {
 `
 
 const SWAP_TX = `
-import FungibleToken from 0xFungibleToken
-import DexRouter from 0xDexRouter
-import TestToken from 0xTestToken
-import TestToken2 from 0xTestToken2
+import FungibleToken from 0x9a0766d93b6608b7
+import DexRouter from 0x8c85caf1772e27b7
+import TestToken from 0x8c85caf1772e27b7
+import TestToken2 from 0x8c85caf1772e27b7
 
 transaction(id: String, amountIn: UFix64, minOut: UFix64, direction: String) {
     prepare(acct: AuthAccount) {

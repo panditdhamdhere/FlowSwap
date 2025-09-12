@@ -16,7 +16,7 @@ const testnet = {
   network: 'testnet',
 }
 
-export function initFCL(env: 'emulator' | 'testnet' = 'emulator') {
+export function initFCL(env: 'emulator' | 'testnet' = 'testnet') {
   const cfg = env === 'testnet' ? testnet : emulator
   config()
     .put('app.detail.title', 'Flow DEX')

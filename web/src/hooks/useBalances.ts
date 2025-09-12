@@ -3,7 +3,7 @@ import * as fcl from '@onflow/fcl'
 import { useAppStore } from '../store'
 
 const GET_BALANCE_SCRIPT = `
-import FungibleToken from 0xFungibleToken
+import FungibleToken from 0x9a0766d93b6608b7
 
 pub fun main(address: Address, vaultPath: StoragePath): UFix64 {
     let account = getAccount(address)

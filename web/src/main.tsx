@@ -4,7 +4,7 @@ import App from './App.tsx'
 import './index.css'
 import { initFCL } from './fclConfig.ts'
 
-initFCL(import.meta.env.VITE_FLOW_NETWORK === 'testnet' ? 'testnet' : 'emulator')
+initFCL('testnet')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

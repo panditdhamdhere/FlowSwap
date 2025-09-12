@@ -3,8 +3,8 @@ import * as fcl from '@onflow/fcl'
 import { useAppStore } from '../store'
 
 const GET_PAIR_RESERVES_SCRIPT = `
-import DexFactory from 0xDexFactory
-import DexPair from 0xDexPair
+import DexFactory from 0x8c85caf1772e27b7
+import DexPair from 0x8c85caf1772e27b7
 
 pub fun main(pairId: String): (UFix64, UFix64) {
     let pairAddress = DexFactory.getPair(id: pairId) ?? panic("Pair not found")

@@ -1,4 +1,4 @@
-##### Built on Flow
+#### Built on Flow
 
 ### DeFi DEX on Flow (Cadence)
 This repo contains a minimal AMM DEX (constant-product) built on Flow.

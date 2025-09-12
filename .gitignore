@@ -24,3 +24,5 @@ flow.db/
 # Editor
 .vscode/
 .idea/
+
+pandit.pkey
