@@ -4,7 +4,7 @@ import App from './App.tsx'
 import './index.css'
 import { initFCL } from './fclConfig.ts'
 
-initFCL('testnet')
+initFCL('emulator')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

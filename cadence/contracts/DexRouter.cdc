@@ -1,6 +1,4 @@
-import FungibleToken from 0xFungibleToken
-import DexPair from 0xDexPair
-import DexFactory from 0xDexFactory
+import FungibleToken from 0xee82856bf20e2aa6
 
 pub contract DexRouter {
 

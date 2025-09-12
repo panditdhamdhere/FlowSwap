@@ -1,23 +1,23 @@
-import FungibleToken from 0xFungibleToken
+import FungibleToken from 0xee82856bf20e2aa6
 
-pub contract TestToken: FungibleToken {
+access(all) contract TestToken: FungibleToken {
 
-	pub let TotalSupply: UFix64
+	access(all) let TotalSupply: UFix64
 
-	pub var totalSupply: UFix64
+	access(all) var totalSupply: UFix64
 
-	pub var tokenAdmin: &Admin{AdminPublic}
+	access(all) var tokenAdmin: &Admin
 
-	pub var minter: &Minter
+	access(all) var minter: &Minter
 
-	pub resource Vault: FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance {
-		pub var balance: UFix64
+	access(all) resource Vault: FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance {
+		access(all) var balance: UFix64
 
 		init(balance: UFix64) {
 			self.balance = balance
 		}
 
-		pub fun withdraw(amount: UFix64): @FungibleToken.Vault {
+		access(all) fun withdraw(amount: UFix64): @FungibleToken.Vault {
 			pre {
 				amount > 0.0: "Amount must be positive"
 				self.balance >= amount: "Insufficient balance"
@@ -26,48 +26,44 @@ pub contract TestToken: FungibleToken {
 			return <-create Vault(balance: amount)
 		}
 
-		pub fun deposit(from: @FungibleToken.Vault) {
+		access(all) fun deposit(from: @FungibleToken.Vault) {
 			let vault <- from as! @TestToken.Vault
 			self.balance = self.balance + vault.balance
 			destroy vault
 		}
 
-		pub fun getBalance(): UFix64 { return self.balance }
+		access(all) fun getBalance(): UFix64 { return self.balance }
 	}
 
-	pub resource interface AdminPublic {
-		pub fun setMinter(newMinter: &Minter)
+	access(all) resource Admin {
+		access(all) fun setMinter(newMinter: &Minter) { TestToken.minter = newMinter }
 	}
 
-	pub resource Admin: AdminPublic {
-		pub fun setMinter(newMinter: &Minter) { TestToken.minter = newMinter }
-	}
-
-	pub resource Minter {
-		pub fun mint(amount: UFix64, recipient: &{FungibleToken.Receiver}) {
+	access(all) resource Minter {
+		access(all) fun mint(amount: UFix64, recipient: &{FungibleToken.Receiver}) {
 			pre { amount > 0.0: "Amount must be positive" }
 			TestToken.totalSupply = TestToken.totalSupply + amount
 			recipient.deposit(from: <-create Vault(balance: amount))
 		}
 	}
 
-	pub fun createEmptyVault(): @FungibleToken.Vault { return <-create Vault(balance: 0.0) }
+	access(all) fun createEmptyVault(): @FungibleToken.Vault { return <-create Vault(balance: 0.0) }
 
-	pub fun createMinter(): &Minter { return &self.minter as &Minter }
+	access(all) fun createMinter(): &Minter { return &self.minter as &Minter }
 
-	pub fun getAdminPublic(): &Admin{AdminPublic} { return self.tokenAdmin }
+	access(all) fun getAdmin(): &Admin { return &self.tokenAdmin as &Admin }
 
 	init(initialSupply: UFix64) {
 		self.TotalSupply = 1_000_000_000.0
 		self.totalSupply = 0.0
 		let admin <- create Admin()
-		self.tokenAdmin <-&admin as &Admin{AdminPublic}
+		self.tokenAdmin <-&admin as &Admin
 		self.minter <- create Minter()
 
 		let acct = self.account
 		acct.save(<-create Vault(balance: 0.0), to: /storage/TestTokenVault)
-		acct.link<&TestToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(/public/TestTokenReceiver, target: /storage/TestTokenVault)
-		acct.link<&TestToken.Vault{FungibleToken.Balance}>(/private/TestTokenBalance, target: /storage/TestTokenVault)
+		acct.link<&TestToken.Vault>(/public/TestTokenReceiver, target: /storage/TestTokenVault)
+		acct.link<&TestToken.Vault>(/private/TestTokenBalance, target: /storage/TestTokenVault)
 
 		let receiverRef = acct.getCapability(/public/TestTokenReceiver)
 			.borrow<&{FungibleToken.Receiver}>()

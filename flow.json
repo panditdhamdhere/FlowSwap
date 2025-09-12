@@ -1,28 +1,16 @@
 {
 	"contracts": {
-		"DexFactory": "./cadence/contracts/DexFactory.cdc",
-		"DexPair": "./cadence/contracts/DexPair.cdc",
-		"DexRouter": "./cadence/contracts/DexRouter.cdc",
+		"SimpleDEX": "./cadence/contracts/SimpleDEX.cdc",
 		"FungibleToken": {
 			"source": "https://raw.githubusercontent.com/onflow/flow-ft/master/contracts/FungibleToken.cdc",
 			"aliases": {
-				"emulator": "ee82856bf20e2aa6"
+				"emulator": "0xee82856bf20e2aa6",
+				"testnet": "0x9a0766d93b6608b7"
 			}
-		},
-		"TestToken": "./cadence/contracts/TestToken.cdc",
-		"TestToken2": "./cadence/contracts/TestToken2.cdc"
+		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
 		"testnet": "https://rest-testnet.onflow.org"
-	},
-	"accounts": {
-		"pandit": {
-			"address": "8c85caf1772e27b7",
-			"key": {
-				"type": "file",
-				"location": "pandit.pkey"
-			}
-		}
 	}
 }
