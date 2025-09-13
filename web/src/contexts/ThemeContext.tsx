@@ -15,24 +15,37 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     // Check localStorage first, then system preference
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme') as Theme
-      if (savedTheme) return savedTheme
+      console.log('Initial theme from localStorage:', savedTheme)
+      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+        return savedTheme
+      }
       
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      console.log('System prefers dark:', systemPrefersDark)
+      return systemPrefersDark ? 'dark' : 'light'
     }
+    console.log('Window not available, defaulting to light')
     return 'light'
   })
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const root = window.document.documentElement
+      console.log('Applying theme to DOM:', theme)
       root.classList.remove('light', 'dark')
       root.classList.add(theme)
       localStorage.setItem('theme', theme)
+      console.log('Theme applied, root classes:', root.classList.toString())
     }
   }, [theme])
 
   const toggleTheme = () => {
-    setThemeState(prev => prev === 'light' ? 'dark' : 'light')
+    console.log('toggleTheme called, current theme:', theme)
+    setThemeState(prev => {
+      const newTheme = prev === 'light' ? 'dark' : 'light'
+      console.log('Setting theme from', prev, 'to', newTheme)
+      return newTheme
+    })
   }
 
   const setTheme = (newTheme: Theme) => {

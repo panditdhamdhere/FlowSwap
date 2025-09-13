@@ -11,41 +11,31 @@ function ThemeToggle() {
 
   const handleToggle = () => {
     console.log('Theme toggle clicked, current theme:', theme)
-    toggleTheme()
+    console.log('About to toggle theme...')
+    try {
+      toggleTheme()
+      console.log('Theme toggle completed')
+    } catch (error) {
+      console.error('Error toggling theme:', error)
+    }
   }
 
+  console.log('ThemeToggle rendered with theme:', theme)
+
   return (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+    <button
       onClick={handleToggle}
-      className="p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300"
+      className="p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
       title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      type="button"
+      style={{ zIndex: 1000 }}
     >
-      <AnimatePresence mode="wait">
-        {theme === 'light' ? (
-          <motion.div
-            key="moon"
-            initial={{ rotate: -90, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            exit={{ rotate: 90, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="sun"
-            initial={{ rotate: -90, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            exit={{ rotate: 90, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Sun className="w-5 h-5 text-yellow-500" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.button>
+      {theme === 'light' ? (
+        <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+      ) : (
+        <Sun className="w-5 h-5 text-yellow-500" />
+      )}
+    </button>
   )
 }
 
