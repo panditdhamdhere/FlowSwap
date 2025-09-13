@@ -17,7 +17,7 @@
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
-		"testnet": "https://129.213.111.42"
+		"testnet": "https://rest-testnet.onflow.org"
 	},
 	"accounts": {
 		"p2": {
