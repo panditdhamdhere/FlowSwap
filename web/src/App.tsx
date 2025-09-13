@@ -2,8 +2,52 @@ import { useEffect, useState } from 'react'
 import * as fcl from '@onflow/fcl'
 import { Toaster, toast } from 'react-hot-toast'
 import { useAppStore } from './store'
+import { useTheme } from './contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Wallet, ArrowUpDown, Plus, Minus, TrendingUp, Zap, Shield, Globe } from 'lucide-react'
+import { Wallet, ArrowUpDown, Plus, Minus, TrendingUp, Zap, Shield, Globe, Sun, Moon } from 'lucide-react'
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme()
+
+  const handleToggle = () => {
+    console.log('Theme toggle clicked, current theme:', theme)
+    toggleTheme()
+  }
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={handleToggle}
+      className="p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300"
+      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+    >
+      <AnimatePresence mode="wait">
+        {theme === 'light' ? (
+          <motion.div
+            key="moon"
+            initial={{ rotate: -90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            exit={{ rotate: 90, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="sun"
+            initial={{ rotate: -90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            exit={{ rotate: 90, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Sun className="w-5 h-5 text-yellow-500" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  )
+}
 
 function Connect() {
   const userAddress = useAppStore((s) => s.userAddress)
@@ -18,8 +62,9 @@ function Connect() {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="flex items-center gap-2"
+      className="flex items-center gap-3"
     >
+      <ThemeToggle />
       {userAddress ? (
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -36,7 +81,7 @@ function Connect() {
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-4 py-2 rounded-full bg-slate-800 text-white hover:bg-slate-700 transition-all duration-200 shadow-lg" 
+            className="px-4 py-2 rounded-full bg-slate-800 dark:bg-slate-700 text-white hover:bg-slate-700 dark:hover:bg-slate-600 transition-all duration-200 shadow-lg" 
             onClick={() => fcl.unauthenticate()}
           >
             Disconnect
@@ -64,7 +109,7 @@ function Card(props: { title: string; children: React.ReactNode; delay?: number;
       animate={{ opacity: 1, y: 0, scale: 1 }} 
       transition={{ duration: 0.6, delay: props.delay ?? 0, type: "spring", stiffness: 100 }}
       whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
-      className={`p-6 rounded-3xl border border-white/30 bg-white/90 dark:bg-white/10 shadow-2xl backdrop-blur-xl ${props.className || ''}`}
+      className={`p-6 rounded-3xl border border-white/30 dark:border-slate-700/30 bg-white/90 dark:bg-slate-800/90 shadow-2xl backdrop-blur-xl ${props.className || ''}`}
     >
       <motion.div 
         initial={{ opacity: 0, x: -10 }}
@@ -81,7 +126,7 @@ function Card(props: { title: string; children: React.ReactNode; delay?: number;
             {props.icon}
           </motion.div>
         )}
-        <h2 className="font-bold text-slate-800 text-xl">{props.title}</h2>
+        <h2 className="font-bold text-slate-800 dark:text-slate-200 text-xl">{props.title}</h2>
       </motion.div>
       {props.children}
     </motion.div>
@@ -101,7 +146,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement> & { label?: st
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="text-sm font-semibold text-slate-700"
+          className="text-sm font-semibold text-slate-700 dark:text-slate-300"
         >
           {props.label}
         </motion.label>
@@ -109,7 +154,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement> & { label?: st
       <motion.input 
         whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)" }}
         {...props} 
-        className={`w-full px-4 py-4 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 text-lg font-medium ${props.className || ''}`} 
+        className={`w-full px-4 py-4 rounded-2xl border-2 border-slate-200 dark:border-slate-600 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 outline-none transition-all duration-300 text-lg font-medium bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 ${props.className || ''}`} 
       />
     </motion.div>
   )
@@ -119,7 +164,7 @@ function Button(props: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant
   const baseClasses = "px-6 py-4 rounded-2xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
   const variants = {
     primary: "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-xl",
-    secondary: "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-lg",
+    secondary: "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:shadow-lg",
     gradient: "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 hover:shadow-xl"
   }
   
@@ -538,7 +583,7 @@ function FloatingElements() {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 relative overflow-hidden transition-colors duration-300">
       <FloatingElements />
       <Toaster 
         position="top-right" 
@@ -573,7 +618,7 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-slate-600 mt-2 text-lg"
+              className="text-slate-600 dark:text-slate-400 mt-2 text-lg"
             >
               Decentralized Exchange on Flow
             </motion.p>
@@ -600,10 +645,10 @@ export default function App() {
         >
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 shadow-lg"
           >
-            <Globe className="w-5 h-5 text-blue-600" />
-            <span className="text-slate-700 font-medium">
+            <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-slate-700 dark:text-slate-300 font-medium">
               Trade tokens, provide liquidity, and earn rewards on the Flow blockchain
             </span>
           </motion.div>
