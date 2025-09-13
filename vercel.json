@@ -1,16 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd web && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "web/dist",
-  "installCommand": "cd web && npm install",
-  "framework": "vite",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "installCommand": "npm run install:web",
+  "framework": "vite"
 }

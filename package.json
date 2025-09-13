@@ -1,0 +1,17 @@
+{
+  "name": "flowswap-dex",
+  "version": "1.0.0",
+  "description": "FlowSwap - Decentralized Exchange on Flow Blockchain",
+  "private": true,
+  "workspaces": [
+    "web"
+  ],
+  "scripts": {
+    "build": "cd web && npm run build",
+    "dev": "cd web && npm run dev",
+    "install:web": "cd web && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
