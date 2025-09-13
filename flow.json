@@ -4,20 +4,23 @@
 			"source": "./cadence/contracts/FlowDEX.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "91493e72be60e71e"
+				"testnet": "91493e72be60e71e",
+				"mainnet": "0x[TO_BE_DEPLOYED]"
 			}
 		},
 		"FungibleToken": {
 			"source": "https://raw.githubusercontent.com/onflow/flow-ft/master/contracts/FungibleToken.cdc",
 			"aliases": {
 				"emulator": "ee82856bf20e2aa6",
-				"testnet": "9a0766d93b6608b7"
+				"testnet": "9a0766d93b6608b7",
+				"mainnet": "f233dcee88fe0abe"
 			}
 		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
-		"testnet": "https://rest-testnet.onflow.org"
+		"testnet": "https://rest-testnet.onflow.org",
+		"mainnet": "https://rest-mainnet.onflow.org"
 	},
 	"accounts": {
 		"p2": {

@@ -3,7 +3,7 @@ import * as fcl from '@onflow/fcl'
 import { Toaster, toast } from 'react-hot-toast'
 import { useAppStore } from './store'
 import { useTheme } from './contexts/ThemeContext'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Wallet, ArrowUpDown, Plus, Minus, TrendingUp, Zap, Shield, Globe, Sun, Moon } from 'lucide-react'
 
 function ThemeToggle() {
@@ -144,8 +144,8 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement> & { label?: st
         </motion.label>
       )}
       <motion.input 
-        whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)" }}
-        {...props} 
+        whileFocus={{ scale: 1.02 }}
+        {...(props as any)} 
         className={`w-full px-4 py-4 rounded-2xl border-2 border-slate-200 dark:border-slate-600 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 outline-none transition-all duration-300 text-lg font-medium bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 ${props.className || ''}`} 
       />
     </motion.div>
@@ -162,9 +162,9 @@ function Button(props: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant
 
   return (
     <motion.button 
-      whileHover={{ scale: 1.05, y: -2 }}
+      whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      {...props} 
+      {...(props as any)} 
       className={`${baseClasses} ${variants[props.variant || 'primary']} ${props.className || ''}`} 
     />
   )

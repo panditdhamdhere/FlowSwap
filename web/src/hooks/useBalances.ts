@@ -31,14 +31,14 @@ export function useBalances() {
           cadence: GET_BALANCE_SCRIPT,
           args: (arg, t) => [
             arg(userAddress, t.Address),
-            arg('/storage/TestTokenVault', t.StoragePath)
+            arg('/storage/TestTokenVault', t.String)
           ]
         }),
         fcl.query({
           cadence: GET_BALANCE_SCRIPT,
           args: (arg, t) => [
             arg(userAddress, t.Address),
-            arg('/storage/TestToken2Vault', t.StoragePath)
+            arg('/storage/TestToken2Vault', t.String)
           ]
         })
       ])

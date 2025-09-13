@@ -1,6 +1,6 @@
 import * as fcl from '@onflow/fcl'
 
-const FUNGIBLE_TOKEN_ADDRESS = "0xee82856bf20e2aa6"
+// const FUNGIBLE_TOKEN_ADDRESS = "0xee82856bf20e2aa6"
 const FLOW_DEX_ADDRESS = "0xf8d6e0586b0a20c7"
 
 const ADD_LIQUIDITY_TX = `
