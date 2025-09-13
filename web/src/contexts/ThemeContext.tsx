@@ -11,39 +11,59 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    // Check localStorage first, then system preference
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme') as Theme
-      console.log('Initial theme from localStorage:', savedTheme)
-      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-        return savedTheme
-      }
-      
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      console.log('System prefers dark:', systemPrefersDark)
-      return systemPrefersDark ? 'dark' : 'light'
-    }
-    console.log('Window not available, defaulting to light')
-    return 'light'
-  })
+  const [theme, setThemeState] = useState<Theme>('light')
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const root = window.document.documentElement
-      console.log('Applying theme to DOM:', theme)
-      root.classList.remove('light', 'dark')
-      root.classList.add(theme)
-      localStorage.setItem('theme', theme)
-      console.log('Theme applied, root classes:', root.classList.toString())
+    // Initialize theme from localStorage or default to light
+    const savedTheme = localStorage.getItem('theme') as Theme
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      setThemeState(savedTheme)
+    } else {
+      // Check system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      setThemeState(prefersDark ? 'dark' : 'light')
     }
+  }, [])
+
+  useEffect(() => {
+    // Apply theme to DOM
+    const root = document.documentElement
+    const body = document.body
+    
+    // Remove existing theme classes
+    root.classList.remove('light', 'dark')
+    body.classList.remove('light', 'dark')
+    
+    // Add new theme class
+    root.classList.add(theme)
+    body.classList.add(theme)
+    
+    // Set CSS custom properties for immediate effect
+    if (theme === 'dark') {
+      root.style.setProperty('--bg-primary', '#0f172a')
+      root.style.setProperty('--bg-secondary', '#1e293b')
+      root.style.setProperty('--text-primary', '#f8fafc')
+      root.style.setProperty('--text-secondary', '#cbd5e1')
+      root.style.setProperty('--accent-primary', '#3b82f6')
+      root.style.setProperty('--accent-secondary', '#8b5cf6')
+    } else {
+      root.style.setProperty('--bg-primary', '#f8fafc')
+      root.style.setProperty('--bg-secondary', '#e2e8f0')
+      root.style.setProperty('--text-primary', '#1e293b')
+      root.style.setProperty('--text-secondary', '#64748b')
+      root.style.setProperty('--accent-primary', '#3b82f6')
+      root.style.setProperty('--accent-secondary', '#8b5cf6')
+    }
+    
+    localStorage.setItem('theme', theme)
+    console.log('Theme applied:', theme, 'Classes:', root.classList.toString())
   }, [theme])
 
   const toggleTheme = () => {
-    console.log('toggleTheme called, current theme:', theme)
+    console.log('Toggling theme from:', theme)
     setThemeState(prev => {
       const newTheme = prev === 'light' ? 'dark' : 'light'
-      console.log('Setting theme from', prev, 'to', newTheme)
+      console.log('New theme:', newTheme)
       return newTheme
     })
   }

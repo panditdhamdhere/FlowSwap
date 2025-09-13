@@ -11,31 +11,34 @@ function ThemeToggle() {
 
   const handleToggle = () => {
     console.log('Theme toggle clicked, current theme:', theme)
-    console.log('About to toggle theme...')
-    try {
-      toggleTheme()
-      console.log('Theme toggle completed')
-    } catch (error) {
-      console.error('Error toggling theme:', error)
-    }
+    toggleTheme()
   }
 
-  console.log('ThemeToggle rendered with theme:', theme)
-
   return (
-    <button
-      onClick={handleToggle}
-      className="p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
-      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-      type="button"
-      style={{ zIndex: 1000 }}
-    >
-      {theme === 'light' ? (
-        <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-      ) : (
-        <Sun className="w-5 h-5 text-yellow-500" />
-      )}
-    </button>
+    <div className="flex items-center gap-3">
+      <span 
+        className="text-sm font-bold px-3 py-2 rounded-lg shadow-lg transition-all duration-300"
+        style={{
+          background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
+          color: '#ffffff',
+          textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+        }}
+      >
+        {theme === 'light' ? '☀️ Light' : '🌙 Dark'}
+      </span>
+      <button
+        onClick={handleToggle}
+        className="p-3 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-2 border-white/30 dark:border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-110"
+        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        type="button"
+      >
+        {theme === 'light' ? (
+          <Moon className="w-5 h-5 text-slate-700" />
+        ) : (
+          <Sun className="w-5 h-5 text-yellow-500" />
+        )}
+      </button>
+    </div>
   )
 }
 
@@ -54,7 +57,6 @@ function Connect() {
       transition={{ duration: 0.5 }}
       className="flex items-center gap-3"
     >
-      <ThemeToggle />
       {userAddress ? (
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -157,7 +159,7 @@ function Button(props: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant
     secondary: "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:shadow-lg",
     gradient: "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white hover:from-pink-600 hover:via-purple-600 hover:to-indigo-600 hover:shadow-xl"
   }
-  
+
   return (
     <motion.button 
       whileHover={{ scale: 1.05, y: -2 }}
@@ -573,7 +575,15 @@ function FloatingElements() {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 relative overflow-hidden transition-colors duration-300">
+    <div 
+      className="min-h-screen relative overflow-hidden transition-colors duration-300"
+      style={{
+        background: 'var(--bg-primary)',
+        backgroundImage: 'linear-gradient(135deg, var(--bg-primary) 0%, var(--accent-primary) 25%, var(--accent-secondary) 75%, var(--bg-primary) 100%)',
+        backgroundSize: '400% 400%',
+        animation: 'gradient-shift 8s ease infinite'
+      }}
+    >
       <FloatingElements />
       <Toaster 
         position="top-right" 
@@ -598,22 +608,32 @@ export default function App() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <motion.h1 
-              whileHover={{ scale: 1.05 }}
-              className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
-            >
-              Flow DEX
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="text-slate-600 dark:text-slate-400 mt-2 text-lg"
-            >
-              Decentralized Exchange on Flow
-            </motion.p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-xl">F</span>
+              </div>
+              <div>
+                <motion.h1 
+                  whileHover={{ scale: 1.02 }}
+                  className="text-4xl font-bold text-white"
+                >
+                  FlowSwap
+                </motion.h1>
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-slate-300 text-sm font-medium"
+                >
+                  Decentralized Exchange on Flow
+                </motion.p>
+              </div>
+            </div>
           </motion.div>
-          <Connect />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Connect />
+          </div>
         </motion.header>
 
         <div className="grid lg:grid-cols-3 gap-8">
