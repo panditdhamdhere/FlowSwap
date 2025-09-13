@@ -1,93 +1,66 @@
 import * as fcl from '@onflow/fcl'
 
-const MINT_TOKENS_TX = `
- import FungibleToken from 0x9a0766d93b6608b7
-import TestToken from 0x8c85caf1772e27b7
-import TestToken2 from 0x8c85caf1772e27b7
-
-transaction(amount1: UFix64, amount2: UFix64) {
-    prepare(acct: AuthAccount) {
-        let r1 = acct.getCapability(/public/TestTokenReceiver).borrow<&{FungibleToken.Receiver}>() ?? panic("missing receiver 1")
-        let r2 = acct.getCapability(/public/TestToken2Receiver).borrow<&{FungibleToken.Receiver}>() ?? panic("missing receiver 2")
-        let m1 = TestToken.createMinter()
-        let m2 = TestToken2.createMinter()
-        m1.mint(amount: amount1, recipient: r1)
-        m2.mint(amount: amount2, recipient: r2)
-    }
-}
-`
+const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
+const FLOW_DEX_ADDRESS = "0x91493e72be60e71e"
 
 const ADD_LIQUIDITY_TX = `
-import FungibleToken from 0x9a0766d93b6608b7
-import DexRouter from 0x8c85caf1772e27b7
-import TestToken from 0x8c85caf1772e27b7
-import TestToken2 from 0x8c85caf1772e27b7
+import FlowDEX from ${FLOW_DEX_ADDRESS}
 
-transaction(id: String, amountA: UFix64, amountB: UFix64) {
+transaction(amountA: UFix64, amountB: UFix64) {
     prepare(acct: AuthAccount) {
-        let vaultARef = acct.borrow<&TestToken.Vault>(from: /storage/TestTokenVault) ?? panic("missing vault A")
-        let vaultBRef = acct.borrow<&TestToken2.Vault>(from: /storage/TestToken2Vault) ?? panic("missing vault B")
-        let outA <- vaultARef.withdraw(amount: amountA)
-        let outB <- vaultBRef.withdraw(amount: amountB)
-        
-        let router = DexRouter()
-        router.addLiquidity(id: id, fromA: <-outA, fromB: <-outB, lpReceiver: acct.getCapability(/public/TestTokenReceiver).borrow<&{FungibleToken.Receiver}>() ?? panic("missing LP receiver"))
+        // For now, we'll just call the contract function directly
+        // In a real implementation, you'd need to handle token transfers
+        let dex = FlowDEX()
+        let liquidity = dex.addLiquidity(amountA: amountA, amountB: amountB)
+        log("Added liquidity: ", liquidity)
     }
 }
 `
 
 const SWAP_TX = `
-import FungibleToken from 0x9a0766d93b6608b7
-import DexRouter from 0x8c85caf1772e27b7
-import TestToken from 0x8c85caf1772e27b7
-import TestToken2 from 0x8c85caf1772e27b7
+import FlowDEX from ${FLOW_DEX_ADDRESS}
 
-transaction(id: String, amountIn: UFix64, minOut: UFix64, direction: String) {
+transaction(amountIn: UFix64) {
     prepare(acct: AuthAccount) {
-        let router = DexRouter()
-        
-        if direction == "AtoB" {
-            let vaultARef = acct.borrow<&TestToken.Vault>(from: /storage/TestTokenVault) ?? panic("missing vault A")
-            let outA <- vaultARef.withdraw(amount: amountIn)
-            router.swapExactAForB(id: id, amountIn: amountIn, minOut: minOut, fromA: <-outA, toB: acct.getCapability(/public/TestToken2Receiver).borrow<&{FungibleToken.Receiver}>() ?? panic("missing receiver B"))
-        } else {
-            let vaultBRef = acct.borrow<&TestToken2.Vault>(from: /storage/TestToken2Vault) ?? panic("missing vault B")
-            let outB <- vaultBRef.withdraw(amount: amountIn)
-            router.swapExactBForA(id: id, amountIn: amountIn, minOut: minOut, fromB: <-outB, toA: acct.getCapability(/public/TestTokenReceiver).borrow<&{FungibleToken.Receiver}>() ?? panic("missing receiver A"))
-        }
+        // For now, we'll just call the contract function directly
+        // In a real implementation, you'd need to handle token transfers
+        let dex = FlowDEX()
+        let amountOut = dex.swapAForB(amountIn: amountIn)
+        log("Swapped: ", amountIn, " for ", amountOut)
     }
 }
 `
 
-export async function mintTokens(amount1: number, amount2: number) {
-  return fcl.mutate({
-    cadence: MINT_TOKENS_TX,
-    args: (arg, t) => [
-      arg(amount1.toFixed(1), t.UFix64),
-      arg(amount2.toFixed(1), t.UFix64)
-    ]
-  })
-}
+const GET_RESERVES_TX = `
+import FlowDEX from ${FLOW_DEX_ADDRESS}
 
-export async function addLiquidity(pairId: string, amountA: number, amountB: number) {
+access(all) fun main(): (UFix64, UFix64) {
+    let dex = FlowDEX()
+    return (dex.getReserveA(), dex.getReserveB())
+}
+`
+
+export async function addLiquidity(amountA: number, amountB: number) {
   return fcl.mutate({
     cadence: ADD_LIQUIDITY_TX,
     args: (arg, t) => [
-      arg(pairId, t.String),
       arg(amountA.toFixed(1), t.UFix64),
       arg(amountB.toFixed(1), t.UFix64)
     ]
   })
 }
 
-export async function swap(pairId: string, amountIn: number, minOut: number, direction: 'AtoB' | 'BtoA') {
+export async function swap(amountIn: number) {
   return fcl.mutate({
     cadence: SWAP_TX,
     args: (arg, t) => [
-      arg(pairId, t.String),
-      arg(amountIn.toFixed(1), t.UFix64),
-      arg(minOut.toFixed(1), t.UFix64),
-      arg(direction, t.String)
+      arg(amountIn.toFixed(1), t.UFix64)
     ]
+  })
+}
+
+export async function getReserves() {
+  return fcl.query({
+    cadence: GET_RESERVES_TX
   })
 }

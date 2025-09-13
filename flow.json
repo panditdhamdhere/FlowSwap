@@ -1,16 +1,45 @@
 {
 	"contracts": {
-		"SimpleDEX": "./cadence/contracts/SimpleDEX.cdc",
+		"FlowDEX": {
+			"source": "./cadence/contracts/FlowDEX.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "91493e72be60e71e"
+			}
+		},
 		"FungibleToken": {
 			"source": "https://raw.githubusercontent.com/onflow/flow-ft/master/contracts/FungibleToken.cdc",
 			"aliases": {
-				"emulator": "0xee82856bf20e2aa6",
-				"testnet": "0x9a0766d93b6608b7"
+				"emulator": "ee82856bf20e2aa6",
+				"testnet": "9a0766d93b6608b7"
 			}
 		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
-		"testnet": "https://rest-testnet.onflow.org"
+		"testnet": "https://129.213.111.42"
+	},
+	"accounts": {
+		"p2": {
+			"address": "91493e72be60e71e",
+			"key": {
+				"type": "file",
+				"location": "p2.pkey"
+			}
+		},
+		"pandit": {
+			"address": "665d58f94c100bdb",
+			"key": {
+				"type": "file",
+				"location": "pandit.pkey"
+			}
+		}
+	},
+	"deployments": {
+		"testnet": {
+			"p2": [
+				"FlowDEX"
+			]
+		}
 	}
 }

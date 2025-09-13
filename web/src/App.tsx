@@ -4,7 +4,7 @@ import { Toaster, toast } from 'react-hot-toast'
 import { useAppStore } from './store'
 import { useBalances } from './hooks/useBalances'
 import { usePairData } from './hooks/usePairData'
-import { mintTokens, addLiquidity, swap } from './transactions'
+import { addLiquidity, swap } from './transactions'
 import { motion } from 'framer-motion'
 import { Wallet } from 'lucide-react'
 
@@ -92,8 +92,6 @@ function PairInfo() {
 
 export default function App() {
   const pairId = useAppStore((s) => s.pairId)
-  const [mintAmount1, setMintAmount1] = useState('1000')
-  const [mintAmount2, setMintAmount2] = useState('1000')
   const [liquidityAmountA, setLiquidityAmountA] = useState('100')
   const [liquidityAmountB, setLiquidityAmountB] = useState('100')
   const [swapAmountIn, setSwapAmountIn] = useState('10')
@@ -101,25 +99,12 @@ export default function App() {
   const [swapDirection, setSwapDirection] = useState<'AtoB' | 'BtoA'>('AtoB')
   const [loading, setLoading] = useState(false)
 
-  const handleMint = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      await mintTokens(parseFloat(mintAmount1), parseFloat(mintAmount2))
-      toast.success('Tokens minted!')
-    } catch (error) {
-      toast.error('Failed to mint tokens')
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleAddLiquidity = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
-      await addLiquidity(pairId, parseFloat(liquidityAmountA), parseFloat(liquidityAmountB))
+      await addLiquidity(parseFloat(liquidityAmountA), parseFloat(liquidityAmountB))
       toast.success('Liquidity added!')
     } catch (error) {
       toast.error('Failed to add liquidity')
@@ -133,7 +118,7 @@ export default function App() {
     e.preventDefault()
     setLoading(true)
     try {
-      await swap(pairId, parseFloat(swapAmountIn), parseFloat(swapMinOut), swapDirection)
+      await swap(parseFloat(swapAmountIn))
       toast.success('Swap completed!')
     } catch (error) {
       toast.error('Failed to swap')
@@ -162,15 +147,6 @@ export default function App() {
           <Card title="Pair Info" delay={0.1}><PairInfo /></Card>
         </div>
 
-        <Card title="Mint Test Tokens" delay={0.15}>
-          <form className="space-y-3" onSubmit={handleMint}>
-            <div className="grid grid-cols-2 gap-3">
-              <Field placeholder="Amount TEST1" value={mintAmount1} onChange={(e) => setMintAmount1(e.target.value)} />
-              <Field placeholder="Amount TEST2" value={mintAmount2} onChange={(e) => setMintAmount2(e.target.value)} />
-            </div>
-            <Button type="submit" disabled={loading}>{loading ? 'Minting...' : 'Mint Tokens'}</Button>
-          </form>
-        </Card>
 
         <section className="grid md:grid-cols-2 gap-6">
           <Card title={`Add Liquidity (${pairId})`} delay={0.2}>

@@ -1,40 +1,38 @@
 import { useState, useEffect } from 'react'
 import * as fcl from '@onflow/fcl'
-import { useAppStore } from '../store'
 
-const GET_PAIR_RESERVES_SCRIPT = `
- e import DexFactory from 0x8c85caf1772e27b7
-import DexPair from 0x8c85caf1772e27b7
+const FLOW_DEX_ADDRESS = "0x91493e72be60e71e"
 
-pub fun main(pairId: String): (UFix64, UFix64) {
-    let pairAddress = DexFactory.getPair(id: pairId) ?? panic("Pair not found")
-    let pair = getAccount(pairAddress).getCapability<&DexPair.Pair>(PublicPath(identifier: "/public/DexPair_".concat(pairId))!)
-        ?? panic("Could not borrow Pair reference")
-    return pair.getReserves()
+const GET_RESERVES_SCRIPT = `
+import FlowDEX from ${FLOW_DEX_ADDRESS}
+
+access(all) fun main(): (UFix64, UFix64) {
+    let dex = FlowDEX()
+    return (dex.getReserveA(), dex.getReserveB())
 }
 `
 
 export function usePairData() {
-  const [reserves, setReserves] = useState<{ reserveA: string; reserveB: string }>({ reserveA: '0', reserveB: '0' })
-  const [loading, setLoading] = useState(false)
-  const pairId = useAppStore((s) => s.pairId)
+  const [reserves, setReserves] = useState<{reserveA: number, reserveB: number} | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchReserves = async () => {
-    setLoading(true)
     try {
+      setLoading(true)
+      setError(null)
+      
       const result = await fcl.query({
-        cadence: GET_PAIR_RESERVES_SCRIPT,
-        args: (arg, t) => [arg(pairId, t.String)]
+        cadence: GET_RESERVES_SCRIPT
       })
       
-      if (result && Array.isArray(result) && result.length === 2) {
-        setReserves({
-          reserveA: result[0]?.toString() || '0',
-          reserveB: result[1]?.toString() || '0'
-        })
-      }
-    } catch (error) {
-      console.error('Error fetching pair reserves:', error)
+      setReserves({
+        reserveA: parseFloat(result[0]),
+        reserveB: parseFloat(result[1])
+      })
+    } catch (err) {
+      console.error('Error fetching reserves:', err)
+      setError('Failed to fetch reserves')
     } finally {
       setLoading(false)
     }
@@ -42,7 +40,16 @@ export function usePairData() {
 
   useEffect(() => {
     fetchReserves()
-  }, [pairId])
+    
+    // Refresh every 10 seconds
+    const interval = setInterval(fetchReserves, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
-  return { reserves, loading, refetch: fetchReserves }
+  return {
+    reserves,
+    loading,
+    error,
+    refetch: fetchReserves
+  }
 }
