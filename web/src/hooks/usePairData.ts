@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import * as fcl from '@onflow/fcl'
 
-const FLOW_DEX_ADDRESS = "0x91493e72be60e71e"
+const FLOW_DEX_ADDRESS = "0xf8d6e0586b0a20c7"
 
 const GET_RESERVES_SCRIPT = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}

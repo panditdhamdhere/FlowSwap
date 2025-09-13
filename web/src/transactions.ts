@@ -1,7 +1,7 @@
 import * as fcl from '@onflow/fcl'
 
-const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
-const FLOW_DEX_ADDRESS = "0x91493e72be60e71e"
+const FUNGIBLE_TOKEN_ADDRESS = "0xee82856bf20e2aa6"
+const FLOW_DEX_ADDRESS = "0xf8d6e0586b0a20c7"
 
 const ADD_LIQUIDITY_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
