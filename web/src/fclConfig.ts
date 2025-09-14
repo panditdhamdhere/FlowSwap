@@ -16,8 +16,26 @@ const testnet = {
   network: 'testnet',
 }
 
+// Contract addresses
+const CONTRACTS = {
+  emulator: {
+    FlowDEX: '0xf8d6e0586b0a20c7',
+    TestToken: '0xf8d6e0586b0a20c7',
+    TestToken2: '0xf8d6e0586b0a20c7',
+    FungibleToken: '0xee82856bf20e2aa6',
+  },
+  testnet: {
+    FlowDEX: '0x18f0d1d9cfa52c6d',
+    TestToken: '0x18f0d1d9cfa52c6d',
+    TestToken2: '0x0ea4b4ea56a1260c',
+    FungibleToken: '0x9a0766d93b6608b7',
+  }
+}
+
 export function initFCL(env: 'emulator' | 'testnet' = 'emulator') {
   const cfg = env === 'testnet' ? testnet : emulator
+  const contracts = CONTRACTS[env]
+  
   config()
     .put('app.detail.title', 'Flow DEX')
     .put('app.detail.icon', 'https://avatars.githubusercontent.com/u/62387156')
@@ -26,4 +44,11 @@ export function initFCL(env: 'emulator' | 'testnet' = 'emulator') {
     .put('discovery.wallet', cfg.wallet)
     .put('discovery.authn.endpoint', cfg.discovery)
     .put('discovery.authn.include', cfg.discoveryInclude)
+    // Contract addresses
+    .put('0xFlowDEX', contracts.FlowDEX)
+    .put('0xTestToken', contracts.TestToken)
+    .put('0xTestToken2', contracts.TestToken2)
+    .put('0xFungibleToken', contracts.FungibleToken)
 }
+
+export { CONTRACTS }

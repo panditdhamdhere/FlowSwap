@@ -1,15 +1,5 @@
-import FlowDEX from 0x91493e72be60e71e
+import FlowDEX from 0xf8d6e0586b0a20c7
 
-access(all) fun main(): (UFix64, UFix64, UFix64, UFix64, UFix64) {
-    let dex = getAccount(0x91493e72be60e71e)
-        .getCapability<&FlowDEX>(/public/flowDEX)
-        .borrow() ?? panic("Could not borrow DEX reference")
-    
-    return (
-        dex.getReserveA(),
-        dex.getReserveB(),
-        dex.getTotalSupply(),
-        dex.getPriceA(),
-        dex.getPriceB()
-    )
+access(all) fun main(): [UFix64] {
+    return [FlowDEX.getReserveA(), FlowDEX.getReserveB()]
 }

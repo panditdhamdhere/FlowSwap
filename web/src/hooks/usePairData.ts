@@ -1,21 +1,14 @@
 import { useState, useEffect } from 'react'
 import * as fcl from '@onflow/fcl'
-import { getQuote } from '../transactions'
+import { getReserves } from '../transactions'
 
 const FLOW_DEX_ADDRESS = "0xf8d6e0586b0a20c7"
 
 const GET_PAIR_DATA_SCRIPT = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
 
-access(all) fun main(): (UFix64, UFix64, UFix64, UFix64, UFix64) {
-    let dex = FlowDEX()
-    return (
-        dex.getReserveA(), 
-        dex.getReserveB(), 
-        dex.getTotalSupply(),
-        dex.getPriceA(),
-        dex.getPriceB()
-    )
+access(all) fun main(): [UFix64] {
+    return [FlowDEX.getReserveA(), FlowDEX.getReserveB()]
 }
 `
 
@@ -53,18 +46,26 @@ export function usePairData() {
         cadence: GET_PAIR_DATA_SCRIPT
       })
       
-      const [reserveA, reserveB, totalSupply, priceA, priceB] = result
+      const [reserveA, reserveB] = result
       
-      // Calculate liquidity (total value in terms of token A)
-      const liquidity = parseFloat(reserveA) + (parseFloat(reserveB) * parseFloat(priceA))
+      // Calculate basic metrics from reserves
+      const reserveAValue = parseFloat(reserveA) || 0
+      const reserveBValue = parseFloat(reserveB) || 0
+      
+      // Simple price calculation (1:1 for now since we don't have price functions)
+      const priceA = reserveBValue > 0 ? reserveAValue / reserveBValue : 0
+      const priceB = reserveAValue > 0 ? reserveBValue / reserveAValue : 0
+      
+      // Calculate liquidity (sum of both reserves)
+      const liquidity = reserveAValue + reserveBValue
       
       setPairData({
-        reserveA: parseFloat(reserveA) || 0,
-        reserveB: parseFloat(reserveB) || 0,
-        totalSupply: parseFloat(totalSupply) || 0,
-        priceA: parseFloat(priceA) || 0,
-        priceB: parseFloat(priceB) || 0,
-        liquidity: liquidity || 0,
+        reserveA: reserveAValue,
+        reserveB: reserveBValue,
+        totalSupply: liquidity, // Using liquidity as total supply for now
+        priceA: priceA,
+        priceB: priceB,
+        liquidity: liquidity,
         volume24h: 0, // TODO: Implement volume tracking
         fee24h: 0 // TODO: Implement fee tracking
       })
@@ -78,8 +79,8 @@ export function usePairData() {
 
   const getSwapQuote = async (amountIn: number, direction: 'AtoB' | 'BtoA') => {
     try {
-      const quote = await getQuote(amountIn, direction)
-      return parseFloat(quote) || 0
+      // For now, return a simple 1:1 quote since swaps aren't implemented yet
+      return amountIn
     } catch (error) {
       console.error('Error getting swap quote:', error)
       return 0

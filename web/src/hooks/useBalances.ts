@@ -29,26 +29,11 @@ export function useBalances() {
     setLoading(true)
     setError(null)
     try {
-      const [test1Balance, test2Balance] = await Promise.all([
-        fcl.query({
-          cadence: GET_BALANCE_SCRIPT,
-          args: (arg, t) => [
-            arg(userAddress, t.Address),
-            arg('/storage/TestTokenVault', t.String)
-          ]
-        }),
-        fcl.query({
-          cadence: GET_BALANCE_SCRIPT,
-          args: (arg, t) => [
-            arg(userAddress, t.Address),
-            arg('/storage/TestToken2Vault', t.String)
-          ]
-        })
-      ])
-      
+      // For now, show zero balances since we haven't implemented token contracts yet
+      // TODO: Implement TestToken and TestToken2 contracts and balance queries
       setBalances({
-        test1: test1Balance?.toString() || '0',
-        test2: test2Balance?.toString() || '0'
+        test1: '0.0',
+        test2: '0.0'
       })
     } catch (error) {
       console.error('Error fetching balances:', error)
