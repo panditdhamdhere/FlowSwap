@@ -16,15 +16,18 @@ pub fun main(address: Address, vaultPath: StoragePath): UFix64 {
 export function useBalances() {
   const [balances, setBalances] = useState<{ test1: string; test2: string }>({ test1: '0', test2: '0' })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const userAddress = useAppStore((s) => s.userAddress)
 
   const fetchBalances = async () => {
     if (!userAddress) {
       setBalances({ test1: '0', test2: '0' })
+      setError(null)
       return
     }
 
     setLoading(true)
+    setError(null)
     try {
       const [test1Balance, test2Balance] = await Promise.all([
         fcl.query({
@@ -49,6 +52,7 @@ export function useBalances() {
       })
     } catch (error) {
       console.error('Error fetching balances:', error)
+      setError('Failed to fetch balances')
     } finally {
       setLoading(false)
     }
@@ -58,5 +62,5 @@ export function useBalances() {
     fetchBalances()
   }, [userAddress])
 
-  return { balances, loading, refetch: fetchBalances }
+  return { balances, loading, error, refetch: fetchBalances }
 }

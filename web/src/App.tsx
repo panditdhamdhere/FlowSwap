@@ -3,8 +3,11 @@ import * as fcl from '@onflow/fcl'
 import { Toaster, toast } from 'react-hot-toast'
 import { useAppStore } from './store'
 import { useTheme } from './contexts/ThemeContext'
+import { usePairData } from './hooks/usePairData'
+import { useBalances } from './hooks/useBalances'
+import { addLiquidity, removeLiquidity, swapAForB, swapBForA } from './transactions'
 import { motion } from 'framer-motion'
-import { Wallet, ArrowUpDown, Plus, Minus, TrendingUp, Zap, Shield, Globe, Sun, Moon } from 'lucide-react'
+import { Wallet, ArrowUpDown, Plus, Minus, TrendingUp, Zap, Shield, Globe, Sun, Moon, AlertTriangle, Info } from 'lucide-react'
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
@@ -171,28 +174,18 @@ function Button(props: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant
 }
 
 function PoolInfo() {
-  const [reserves, setReserves] = useState({ reserveA: 1000, reserveB: 2000 })
-  const [loading, setLoading] = useState(false)
+  const { pairData, loading, error } = usePairData()
 
-  const fetchReserves = async () => {
-    setLoading(true)
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setReserves({ reserveA: 1000 + Math.random() * 100, reserveB: 2000 + Math.random() * 200 })
-    } catch (error) {
-      console.error('Error fetching reserves:', error)
-    } finally {
-      setLoading(false)
-    }
+  if (error) {
+    return (
+      <Card title="Pool Information" delay={0.05} icon={<AlertTriangle className="w-5 h-5" />}>
+        <div className="text-center py-8">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 font-medium">{error}</p>
+        </div>
+      </Card>
+    )
   }
-
-  useEffect(() => {
-    fetchReserves()
-    const interval = setInterval(fetchReserves, 10000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const price = reserves.reserveB / reserves.reserveA
 
   return (
     <Card title="Pool Information" delay={0.05} icon={<TrendingUp className="w-5 h-5" />}>
@@ -204,7 +197,7 @@ function PoolInfo() {
           >
             <div className="text-sm text-blue-600 font-semibold mb-2">Token A</div>
             <motion.div 
-              key={reserves.reserveA}
+              key={pairData.reserveA}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
@@ -217,7 +210,7 @@ function PoolInfo() {
                   className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"
                 />
               ) : (
-                reserves.reserveA.toFixed(2)
+                pairData.reserveA.toFixed(2)
               )}
             </motion.div>
           </motion.div>
@@ -227,7 +220,7 @@ function PoolInfo() {
           >
             <div className="text-sm text-purple-600 font-semibold mb-2">Token B</div>
             <motion.div 
-              key={reserves.reserveB}
+              key={pairData.reserveB}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
@@ -240,7 +233,7 @@ function PoolInfo() {
                   className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"
                 />
               ) : (
-                reserves.reserveB.toFixed(2)
+                pairData.reserveB.toFixed(2)
               )}
             </motion.div>
           </motion.div>
@@ -260,13 +253,32 @@ function PoolInfo() {
             <span className="text-lg text-green-700 font-bold">Current Price</span>
           </div>
           <motion.div 
-            key={price}
+            key={pairData.priceA}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
             className="text-2xl font-bold text-green-800"
           >
-            1 A = {loading ? '...' : price.toFixed(4)} B
+            1 A = {loading ? '...' : pairData.priceA.toFixed(4)} B
+          </motion.div>
+        </motion.div>
+
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="p-6 rounded-2xl bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 shadow-lg"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <Zap className="w-6 h-6 text-indigo-600" />
+            <span className="text-lg text-indigo-700 font-bold">Total Liquidity</span>
+          </div>
+          <motion.div 
+            key={pairData.liquidity}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="text-2xl font-bold text-indigo-800"
+          >
+            {loading ? '...' : pairData.liquidity.toFixed(2)} A
           </motion.div>
         </motion.div>
       </div>
@@ -280,22 +292,59 @@ function SwapInterface() {
   const [fromAmount, setFromAmount] = useState('')
   const [toAmount, setToAmount] = useState('')
   const [loading, setLoading] = useState(false)
+  const [quoteLoading, setQuoteLoading] = useState(false)
+  const [slippage, setSlippage] = useState(0.5) // 0.5% default slippage
+  
+  const { getSwapQuote, calculatePriceImpact } = usePairData()
+  const { refetch: refetchBalances } = useBalances()
 
   const handleSwap = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fromAmount) return
+    if (!fromAmount || !toAmount) return
 
     setLoading(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      toast.success(`Swapped ${fromAmount} ${fromToken} for ${toAmount} ${toToken}`)
+      const amountIn = parseFloat(fromAmount)
+      const minAmountOut = parseFloat(toAmount) * (1 - slippage / 100)
+
+      let txHash
+      if (fromToken === 'A' && toToken === 'B') {
+        txHash = await swapAForB(amountIn, minAmountOut)
+      } else {
+        txHash = await swapBForA(amountIn, minAmountOut)
+      }
+
+      await fcl.tx(txHash).onceSealed()
+      
+      toast.success(`Successfully swapped ${fromAmount} ${fromToken} for ${toAmount} ${toToken}`)
       setFromAmount('')
       setToAmount('')
+      refetchBalances()
     } catch (error) {
-      toast.error('Swap failed')
+      toast.error('Swap failed: ' + (error as Error).message)
       console.error(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAmountChange = async (value: string) => {
+    setFromAmount(value)
+    if (!value || parseFloat(value) <= 0) {
+      setToAmount('')
+      return
+    }
+
+    setQuoteLoading(true)
+    try {
+      const direction = fromToken === 'A' ? 'AtoB' : 'BtoA'
+      const quote = await getSwapQuote(parseFloat(value), direction)
+      setToAmount(quote.toFixed(6))
+    } catch (error) {
+      console.error('Error getting quote:', error)
+      setToAmount('')
+    } finally {
+      setQuoteLoading(false)
     }
   }
 
@@ -307,6 +356,8 @@ function SwapInterface() {
     setToAmount(fromAmount)
   }
 
+  const priceImpact = fromAmount ? calculatePriceImpact(parseFloat(fromAmount), fromToken === 'A' ? 'AtoB' : 'BtoA') : 0
+
   return (
     <Card title="Swap Tokens" delay={0.1} icon={<ArrowUpDown className="w-5 h-5" />}>
       <form onSubmit={handleSwap} className="space-y-6">
@@ -316,7 +367,7 @@ function SwapInterface() {
             type="number"
             placeholder="0.0"
             value={fromAmount}
-            onChange={(e) => setFromAmount(e.target.value)}
+            onChange={(e) => handleAmountChange(e.target.value)}
             className="text-right text-xl font-bold"
           />
           <motion.div 
@@ -342,7 +393,6 @@ function SwapInterface() {
             type="number"
             placeholder="0.0"
             value={toAmount}
-            onChange={(e) => setToAmount(e.target.value)}
             className="text-right text-xl font-bold"
             readOnly
           />
@@ -351,14 +401,63 @@ function SwapInterface() {
             className="flex items-center justify-between px-5 py-4 rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100 border-2 border-slate-200 shadow-lg"
           >
             <span className="font-bold text-slate-700 text-lg">Token {toToken}</span>
+            {quoteLoading && (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full"
+              />
+            )}
           </motion.div>
+        </div>
+
+        {/* Price Impact Warning */}
+        {priceImpact > 5 && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-2xl bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 shadow-lg"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <span className="font-bold text-yellow-800">High Price Impact</span>
+            </div>
+            <p className="text-yellow-700 text-sm">
+              This swap will have a {priceImpact.toFixed(2)}% price impact. Consider splitting into smaller trades.
+            </p>
+          </motion.div>
+        )}
+
+        {/* Slippage Settings */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Slippage Tolerance: {slippage}%
+          </label>
+          <div className="flex gap-2">
+            {[0.1, 0.5, 1.0, 3.0].map((value) => (
+              <motion.button
+                key={value}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => setSlippage(value)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  slippage === value
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                }`}
+              >
+                {value}%
+              </motion.button>
+            ))}
+          </div>
         </div>
 
         <motion.div
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <Button type="submit" disabled={loading || !fromAmount} variant="gradient" className="w-full text-lg py-4">
+          <Button type="submit" disabled={loading || !fromAmount || !toAmount} variant="gradient" className="w-full text-lg py-4">
             {loading ? (
               <motion.div className="flex items-center gap-2">
                 <motion.div
@@ -383,22 +482,69 @@ function LiquidityInterface() {
   const [tokenBAmount, setTokenBAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [action, setAction] = useState<'add' | 'remove'>('add')
+  const [liquidityAmount, setLiquidityAmount] = useState('')
+  
+  const { pairData } = usePairData()
+  const { balances, refetch: refetchBalances } = useBalances()
 
   const handleLiquidity = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!tokenAAmount || !tokenBAmount) return
+    if (action === 'add' && (!tokenAAmount || !tokenBAmount)) return
+    if (action === 'remove' && !liquidityAmount) return
 
     setLoading(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      toast.success(`${action === 'add' ? 'Added' : 'Removed'} liquidity successfully`)
-      setTokenAAmount('')
-      setTokenBAmount('')
+      let txHash
+      
+      if (action === 'add') {
+        const amountA = parseFloat(tokenAAmount)
+        const amountB = parseFloat(tokenBAmount)
+        const minLiquidity = 0 // TODO: Calculate based on slippage tolerance
+        
+        txHash = await addLiquidity(amountA, amountB, minLiquidity)
+        await fcl.tx(txHash).onceSealed()
+        toast.success(`Successfully added liquidity: ${amountA} A + ${amountB} B`)
+        setTokenAAmount('')
+        setTokenBAmount('')
+      } else {
+        const liquidity = parseFloat(liquidityAmount)
+        const minAmountA = 0 // TODO: Calculate based on slippage tolerance
+        const minAmountB = 0 // TODO: Calculate based on slippage tolerance
+        
+        txHash = await removeLiquidity(liquidity, minAmountA, minAmountB)
+        await fcl.tx(txHash).onceSealed()
+        toast.success(`Successfully removed liquidity: ${liquidity} LP tokens`)
+        setLiquidityAmount('')
+      }
+      
+      refetchBalances()
     } catch (error) {
-      toast.error(`${action === 'add' ? 'Add' : 'Remove'} liquidity failed`)
+      toast.error(`${action === 'add' ? 'Add' : 'Remove'} liquidity failed: ` + (error as Error).message)
       console.error(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const calculateOptimalAmounts = () => {
+    if (!pairData.reserveA || !pairData.reserveB) return
+    
+    const ratio = pairData.reserveA / pairData.reserveB
+    const balanceA = parseFloat(balances.test1) || 0
+    const balanceB = parseFloat(balances.test2) || 0
+    
+    // Calculate optimal amounts based on current reserves
+    const maxAmountA = balanceA
+    const maxAmountB = balanceA / ratio
+    
+    if (maxAmountB <= balanceB) {
+      setTokenAAmount(maxAmountA.toFixed(6))
+      setTokenBAmount(maxAmountB.toFixed(6))
+    } else {
+      const maxAmountB2 = balanceB
+      const maxAmountA2 = balanceB * ratio
+      setTokenAAmount(maxAmountA2.toFixed(6))
+      setTokenBAmount(maxAmountB2.toFixed(6))
     }
   }
 
@@ -437,26 +583,77 @@ function LiquidityInterface() {
         </div>
 
         <form onSubmit={handleLiquidity} className="space-y-6">
-          <Input
-            label="Token A Amount"
-            type="number"
-            placeholder="0.0"
-            value={tokenAAmount}
-            onChange={(e) => setTokenAAmount(e.target.value)}
-          />
-          <Input
-            label="Token B Amount"
-            type="number"
-            placeholder="0.0"
-            value={tokenBAmount}
-            onChange={(e) => setTokenBAmount(e.target.value)}
-          />
+          {action === 'add' ? (
+            <>
+              <div className="space-y-4">
+                <Input
+                  label="Token A Amount"
+                  type="number"
+                  placeholder="0.0"
+                  value={tokenAAmount}
+                  onChange={(e) => setTokenAAmount(e.target.value)}
+                />
+                <Input
+                  label="Token B Amount"
+                  type="number"
+                  placeholder="0.0"
+                  value={tokenBAmount}
+                  onChange={(e) => setTokenBAmount(e.target.value)}
+                />
+              </div>
+              
+              {/* Optimal amounts button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={calculateOptimalAmounts}
+                className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 text-blue-700 font-medium hover:from-blue-100 hover:to-indigo-100 transition-all"
+              >
+                Use Optimal Amounts
+              </motion.button>
+            </>
+          ) : (
+            <Input
+              label="Liquidity Tokens to Remove"
+              type="number"
+              placeholder="0.0"
+              value={liquidityAmount}
+              onChange={(e) => setLiquidityAmount(e.target.value)}
+            />
+          )}
+          
+          {/* Pool Share Info */}
+          {action === 'add' && tokenAAmount && tokenBAmount && pairData.totalSupply > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 shadow-lg"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="w-5 h-5 text-green-600" />
+                <span className="font-bold text-green-800">Pool Share</span>
+              </div>
+              <p className="text-green-700 text-sm">
+                You will receive approximately {((parseFloat(tokenAAmount) / pairData.reserveA) * 100).toFixed(2)}% of the pool
+              </p>
+            </motion.div>
+          )}
           
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Button type="submit" disabled={loading || !tokenAAmount || !tokenBAmount} variant="gradient" className="w-full text-lg py-4">
+            <Button 
+              type="submit" 
+              disabled={
+                loading || 
+                (action === 'add' && (!tokenAAmount || !tokenBAmount)) ||
+                (action === 'remove' && !liquidityAmount)
+              } 
+              variant="gradient" 
+              className="w-full text-lg py-4"
+            >
               {loading ? (
                 <motion.div className="flex items-center gap-2">
                   <motion.div
@@ -479,13 +676,7 @@ function LiquidityInterface() {
 
 function UserBalances() {
   const userAddress = useAppStore((s) => s.userAddress)
-  const [balances, setBalances] = useState({ tokenA: 1000, tokenB: 500 })
-
-  useEffect(() => {
-    if (userAddress) {
-      setBalances({ tokenA: 1000 + Math.random() * 100, tokenB: 500 + Math.random() * 50 })
-    }
-  }, [userAddress])
+  const { balances, loading, error } = useBalances()
 
   if (!userAddress) {
     return (
@@ -509,6 +700,17 @@ function UserBalances() {
     )
   }
 
+  if (error) {
+    return (
+      <Card title="Your Balances" delay={0.2} icon={<AlertTriangle className="w-5 h-5" />}>
+        <div className="text-center py-8">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 font-medium">{error}</p>
+        </div>
+      </Card>
+    )
+  }
+
   return (
     <Card title="Your Balances" delay={0.2} icon={<Shield className="w-5 h-5" />}>
       <div className="space-y-4">
@@ -518,13 +720,21 @@ function UserBalances() {
         >
           <span className="font-bold text-blue-800 text-lg">Token A</span>
           <motion.span 
-            key={balances.tokenA}
+            key={balances.test1}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
             className="text-xl font-bold text-blue-900"
           >
-            {balances.tokenA.toFixed(2)}
+            {loading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"
+              />
+            ) : (
+              parseFloat(balances.test1).toFixed(2)
+            )}
           </motion.span>
         </motion.div>
         <motion.div 
@@ -533,15 +743,33 @@ function UserBalances() {
         >
           <span className="font-bold text-purple-800 text-lg">Token B</span>
           <motion.span 
-            key={balances.tokenB}
+            key={balances.test2}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
             className="text-xl font-bold text-purple-900"
           >
-            {balances.tokenB.toFixed(2)}
+            {loading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full"
+              />
+            ) : (
+              parseFloat(balances.test2).toFixed(2)
+            )}
           </motion.span>
         </motion.div>
+        
+        {/* Refresh button */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => window.location.reload()}
+          className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 border-2 border-slate-200 text-slate-700 font-medium hover:from-slate-100 hover:to-slate-200 transition-all"
+        >
+          Refresh Balances
+        </motion.button>
       </div>
     </Card>
   )

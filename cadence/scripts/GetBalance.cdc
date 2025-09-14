@@ -1,8 +1,15 @@
-import FungibleToken from 0xFungibleToken
+import FungibleToken from 0x9a0766d93b6608b7
 
-pub fun main(address: Address, vaultPath: StoragePath): UFix64 {
-    let account = getAccount(address)
-    let vault = account.getCapability(vaultPath).borrow<&{FungibleToken.Balance}>()
-        ?? panic("Could not borrow Balance reference to the Vault")
-    return vault.balance
+access(all) fun main(account: Address, tokenType: String): UFix64 {
+    let account = getAccount(account)
+    
+    if tokenType == "FLOW" {
+        let vault = account.getCapability<&FungibleToken.Vault>(/public/flowTokenVault)
+            .borrow() ?? panic("Could not borrow Flow token vault")
+        return vault.balance
+    } else {
+        let vault = account.getCapability<&FungibleToken.Vault>(/public/testTokenVault)
+            .borrow() ?? panic("Could not borrow TestToken vault")
+        return vault.balance
+    }
 }
