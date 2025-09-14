@@ -5,7 +5,7 @@
 			"aliases": {
 				"emulator": "0xf8d6e0586b0a20c7",
 				"testnet": "0x91493e72be60e71e",
-				"mainnet": "0x0000000000000000"
+				"mainnet": "0xf8d6e0586b0a20c7"
 			}
 		},
 		"TestToken": {
@@ -13,7 +13,7 @@
 			"aliases": {
 				"emulator": "0xf8d6e0586b0a20c7",
 				"testnet": "0x91493e72be60e71e",
-				"mainnet": "0x0000000000000000"
+				"mainnet": "0xf8d6e0586b0a20c7"
 			}
 		},
 		"TestToken2": {
@@ -21,7 +21,7 @@
 			"aliases": {
 				"emulator": "0xf8d6e0586b0a20c7",
 				"testnet": "0x665d58f94c100bdb",
-				"mainnet": "0x0000000000000000"
+				"mainnet": "0xf8d6e0586b0a20c7"
 			}
 		},
 		"FungibleToken": {
@@ -39,33 +39,15 @@
 		"mainnet": "https://rest-mainnet.onflow.org"
 	},
 	"accounts": {
-		"p2": {
-			"address": "0x91493e72be60e71e",
-			"key": {
-				"type": "hex",
-				"index": 0,
-				"signatureAlgorithm": "ECDSA_P256",
-				"hashAlgorithm": "SHA3_256"
-			}
-		},
-		"pandit": {
-			"address": "0x665d58f94c100bdb",
-			"key": {
-				"type": "hex",
-				"index": 0,
-				"signatureAlgorithm": "ECDSA_P256",
-				"hashAlgorithm": "SHA3_256"
-			}
+		"emulator-account": {
+			"address": "f8d6e0586b0a20c7",
+			"key": "11c5dfdeb0ff03a7a73ef39788563b62c89adea67bbb21c95eae0b5c9e9848e6"
 		}
 	},
 	"deployments": {
-		"testnet": {
-			"p2": [
-				"FlowDEX",
-				"TestToken"
-			],
-			"pandit": [
-				"TestToken2"
+		"emulator": {
+			"emulator-account": [
+				"FlowDEX"
 			]
 		}
 	}

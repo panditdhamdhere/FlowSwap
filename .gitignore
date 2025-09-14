@@ -31,6 +31,7 @@ build/
 # Flow emulator state
 flow.json.lock
 flow.db/
+flowdb/
 .flow/
 flow-accounts.json
 
