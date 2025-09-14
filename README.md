@@ -70,19 +70,9 @@ npm run dev
 
 ### Deployment
 
-#### Deploy to Flow Testnet
+#### ✅ Deployed to Flow Testnet
 
-1. Ensure you have a Flow testnet account with FLOW tokens
-2. Update the contract addresses in `flow.json` if needed
-3. Run the deployment script:
-```bash
-./deploy.sh
-```
-
-Or deploy manually:
-```bash
-flow project deploy --network testnet
-```
+The contracts are already deployed to Flow testnet! You can interact with them using the addresses above.
 
 #### Deploy to Flow Mainnet
 
@@ -91,6 +81,20 @@ flow project deploy --network testnet
 3. Deploy:
 ```bash
 flow project deploy --network mainnet
+```
+
+#### Manual Deployment (if needed)
+
+To deploy contracts manually to testnet:
+```bash
+# Deploy TestToken
+flow accounts add-contract --network testnet --signer <account> ./cadence/contracts/TestToken.cdc
+
+# Deploy TestToken2  
+flow accounts add-contract --network testnet --signer <account> ./cadence/contracts/TestToken2.cdc
+
+# Deploy FlowDEX
+flow accounts add-contract --network testnet --signer <account> ./cadence/contracts/FlowDEX.cdc
 ```
 
 ## Configuration
@@ -106,13 +110,26 @@ flow project deploy --network mainnet
 - Access node endpoints
 - Wallet discovery settings
 
+## Deployed Contracts
+
+### Flow Testnet Addresses
+- **FlowDEX**: `0x18f0d1d9cfa52c6d`
+- **TestToken**: `0x18f0d1d9cfa52c6d`
+- **TestToken2**: `0x0ea4b4ea56a1260c`
+- **FungibleToken**: `0x9a0766d93b6608b7` (Flow standard)
+
+### Contract Verification
+You can verify the deployed contracts on Flow testnet:
+- FlowDEX: [View on Flowscan](https://testnet.flowscan.org/account/18f0d1d9cfa52c6d)
+- TestToken: [View on Flowscan](https://testnet.flowscan.org/account/18f0d1d9cfa52c6d)
+- TestToken2: [View on Flowscan](https://testnet.flowscan.org/account/0ea4b4ea56a1260c)
+
 ## Smart Contract Details
 
 ### FlowDEX Contract
 - **addLiquidity**: Add liquidity to the pool
-- **swapAForB**: Swap token A for token B
 - **getReserveA/getReserveB**: Get current reserves
-- **Events**: LiquidityAdded, SwapExecuted
+- **Events**: LiquidityAdded
 
 ### Security Features
 - Input validation with pre-conditions

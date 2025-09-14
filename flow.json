@@ -3,51 +3,74 @@
 		"FlowDEX": {
 			"source": "./cadence/contracts/FlowDEX.cdc",
 			"aliases": {
-				"emulator": "0xf8d6e0586b0a20c7",
-				"testnet": "0x91493e72be60e71e",
-				"mainnet": "0xf8d6e0586b0a20c7"
-			}
-		},
-		"TestToken": {
-			"source": "./cadence/contracts/TestToken.cdc",
-			"aliases": {
-				"emulator": "0xf8d6e0586b0a20c7",
-				"testnet": "0x91493e72be60e71e",
-				"mainnet": "0xf8d6e0586b0a20c7"
-			}
-		},
-		"TestToken2": {
-			"source": "./cadence/contracts/TestToken2.cdc",
-			"aliases": {
-				"emulator": "0xf8d6e0586b0a20c7",
-				"testnet": "0x665d58f94c100bdb",
-				"mainnet": "0xf8d6e0586b0a20c7"
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f8d6e0586b0a20c7",
+				"testnet": "18f0d1d9cfa52c6d"
 			}
 		},
 		"FungibleToken": {
 			"source": "https://raw.githubusercontent.com/onflow/flow-ft/master/contracts/FungibleToken.cdc",
 			"aliases": {
-				"emulator": "0xee82856bf20e2aa6",
-				"testnet": "0x9a0766d93b6608b7",
-				"mainnet": "0xf233dcee88fe0abe"
+				"emulator": "ee82856bf20e2aa6",
+				"mainnet": "f233dcee88fe0abe",
+				"testnet": "9a0766d93b6608b7"
+			}
+		},
+		"TestToken": {
+			"source": "./cadence/contracts/TestToken.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f8d6e0586b0a20c7",
+				"testnet": "18f0d1d9cfa52c6d"
+			}
+		},
+		"TestToken2": {
+			"source": "./cadence/contracts/TestToken2.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f8d6e0586b0a20c7",
+				"testnet": "0ea4b4ea56a1260c"
 			}
 		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
-		"testnet": "https://rest-testnet.onflow.org",
-		"mainnet": "https://rest-mainnet.onflow.org"
+		"mainnet": "https://rest-mainnet.onflow.org",
+		"testnet": "access-testnet.onflow.org:9000"
 	},
 	"accounts": {
 		"emulator-account": {
 			"address": "f8d6e0586b0a20c7",
 			"key": "11c5dfdeb0ff03a7a73ef39788563b62c89adea67bbb21c95eae0b5c9e9848e6"
+		},
+		"panditd": {
+			"address": "18f0d1d9cfa52c6d",
+			"key": {
+				"type": "file",
+				"location": "panditd.pkey"
+			}
+		},
+		"panditd2": {
+			"address": "0ea4b4ea56a1260c",
+			"key": {
+				"type": "file",
+				"location": "panditd2.pkey"
+			}
 		}
 	},
 	"deployments": {
 		"emulator": {
 			"emulator-account": [
 				"FlowDEX"
+			]
+		},
+		"testnet": {
+			"panditd": [
+				"TestToken",
+				"FlowDEX"
+			],
+			"panditd2": [
+				"TestToken2"
 			]
 		}
 	}

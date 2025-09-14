@@ -39,7 +39,7 @@ access(all) contract TestToken2: FungibleToken {
 		self.minter <- create Minter()
 		let acct = self.account
 		acct.save(<-create Vault(balance: 0.0), to: /storage/TestToken2Vault)
-		acct.link<&TestToken2.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(/public/TestToken2Receiver, target: /storage/TestToken2Vault)
+		acct.link<&TestToken2.Vault>(/public/TestToken2Receiver, target: /storage/TestToken2Vault)
 		let receiverRef = acct.getCapability(/public/TestToken2Receiver).borrow<&{FungibleToken.Receiver}>() ?? panic("Missing receiver")
 		self.minter.mint(amount: initialSupply, recipient: receiverRef)
 	}
