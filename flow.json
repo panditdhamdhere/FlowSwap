@@ -3,17 +3,33 @@
 		"FlowDEX": {
 			"source": "./cadence/contracts/FlowDEX.cdc",
 			"aliases": {
-				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "91493e72be60e71e",
-				"mainnet": "0x[TO_BE_DEPLOYED]"
+				"emulator": "0xf8d6e0586b0a20c7",
+				"testnet": "0x91493e72be60e71e",
+				"mainnet": "0x0000000000000000"
+			}
+		},
+		"TestToken": {
+			"source": "./cadence/contracts/TestToken.cdc",
+			"aliases": {
+				"emulator": "0xf8d6e0586b0a20c7",
+				"testnet": "0x91493e72be60e71e",
+				"mainnet": "0x0000000000000000"
+			}
+		},
+		"TestToken2": {
+			"source": "./cadence/contracts/TestToken2.cdc",
+			"aliases": {
+				"emulator": "0xf8d6e0586b0a20c7",
+				"testnet": "0x665d58f94c100bdb",
+				"mainnet": "0x0000000000000000"
 			}
 		},
 		"FungibleToken": {
 			"source": "https://raw.githubusercontent.com/onflow/flow-ft/master/contracts/FungibleToken.cdc",
 			"aliases": {
-				"emulator": "ee82856bf20e2aa6",
-				"testnet": "9a0766d93b6608b7",
-				"mainnet": "f233dcee88fe0abe"
+				"emulator": "0xee82856bf20e2aa6",
+				"testnet": "0x9a0766d93b6608b7",
+				"mainnet": "0xf233dcee88fe0abe"
 			}
 		}
 	},
@@ -24,24 +40,32 @@
 	},
 	"accounts": {
 		"p2": {
-			"address": "91493e72be60e71e",
+			"address": "0x91493e72be60e71e",
 			"key": {
-				"type": "file",
-				"location": "p2.pkey"
+				"type": "hex",
+				"index": 0,
+				"signatureAlgorithm": "ECDSA_P256",
+				"hashAlgorithm": "SHA3_256"
 			}
 		},
 		"pandit": {
-			"address": "665d58f94c100bdb",
+			"address": "0x665d58f94c100bdb",
 			"key": {
-				"type": "file",
-				"location": "pandit.pkey"
+				"type": "hex",
+				"index": 0,
+				"signatureAlgorithm": "ECDSA_P256",
+				"hashAlgorithm": "SHA3_256"
 			}
 		}
 	},
 	"deployments": {
 		"testnet": {
 			"p2": [
-				"FlowDEX"
+				"FlowDEX",
+				"TestToken"
+			],
+			"pandit": [
+				"TestToken2"
 			]
 		}
 	}

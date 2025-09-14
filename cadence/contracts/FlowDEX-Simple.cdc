@@ -8,40 +8,23 @@ access(all) contract FlowDEX {
     access(all) event LiquidityAdded(amountA: UFix64, amountB: UFix64, liquidityTokens: UFix64, provider: Address)
     access(all) event LiquidityRemoved(amountA: UFix64, amountB: UFix64, liquidityTokens: UFix64, provider: Address)
     access(all) event SwapExecuted(amountIn: UFix64, amountOut: UFix64, tokenIn: String, tokenOut: String, trader: Address)
-    access(all) event PairCreated(tokenA: Address, tokenB: Address, pairAddress: Address)
-    access(all) event FeeUpdated(oldFee: UFix64, newFee: UFix64)
-    access(all) event AdminChanged(oldAdmin: Address, newAdmin: Address)
-    access(all) event ProtocolFeeCollected(amount: UFix64, token: String)
 
     // Constants
     access(all) let FEE_DENOMINATOR: UFix64
     access(all) let SWAP_FEE: UFix64
-    access(all) let PROTOCOL_FEE: UFix64
     access(all) let MINIMUM_LIQUIDITY: UFix64
-    access(all) let MAX_FEE: UFix64
 
     // State variables
     access(all) var reserveA: UFix64
     access(all) var reserveB: UFix64
     access(all) var totalSupply: UFix64
-    access(all) var kLast: UFix64
-    access(all) var protocolFeeA: UFix64
-    access(all) var protocolFeeB: UFix64
-    access(all) var totalVolume24h: UFix64
-    access(all) var lastUpdateTime: UFix64
 
-    // Token references
-    access(all) var tokenA: &{FungibleToken.Provider}
-    access(all) var tokenB: &{FungibleToken.Provider}
-
-    // Liquidity token vault with enhanced features
+    // Liquidity token vault
     access(all) resource LiquidityVault: FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance {
         access(all) var balance: UFix64
-        access(all) var lastClaimTime: UFix64
 
         init(balance: UFix64) {
             self.balance = balance
-            self.lastClaimTime = FlowDEX.lastUpdateTime
         }
 
         access(all) fun withdraw(amount: UFix64): @FungibleToken.Vault {
@@ -62,66 +45,9 @@ access(all) contract FlowDEX {
         access(all) fun getBalance(): UFix64 { 
             return self.balance 
         }
-
-        access(all) fun getLastClaimTime(): UFix64 {
-            return self.lastClaimTime
-        }
-
-        access(all) fun updateLastClaimTime() {
-            self.lastClaimTime = FlowDEX.lastUpdateTime
-        }
     }
 
-    // Enhanced Admin resource with governance features
-    access(all) resource Admin {
-        access(all) fun setFee(newFee: UFix64) {
-            pre {
-                newFee <= FlowDEX.MAX_FEE: "Fee cannot exceed maximum"
-                newFee >= 0.0: "Fee cannot be negative"
-            }
-            let oldFee = FlowDEX.SWAP_FEE
-            FlowDEX.SWAP_FEE = newFee
-            emit FeeUpdated(oldFee: oldFee, newFee: newFee)
-        }
-
-        access(all) fun setProtocolFee(newFee: UFix64) {
-            pre {
-                newFee <= 1000.0: "Protocol fee cannot exceed 10%"
-                newFee >= 0.0: "Protocol fee cannot be negative"
-            }
-            FlowDEX.PROTOCOL_FEE = newFee
-        }
-
-        access(all) fun collectProtocolFees(): (UFix64, UFix64) {
-            let feeA = FlowDEX.protocolFeeA
-            let feeB = FlowDEX.protocolFeeB
-            
-            FlowDEX.protocolFeeA = 0.0
-            FlowDEX.protocolFeeB = 0.0
-            
-            if feeA > 0.0 {
-                emit ProtocolFeeCollected(amount: feeA, token: "A")
-            }
-            if feeB > 0.0 {
-                emit ProtocolFeeCollected(amount: feeB, token: "B")
-            }
-            
-            return (feeA, feeB)
-        }
-
-        access(all) fun emergencyWithdraw(): (UFix64, UFix64) {
-            let amountA = FlowDEX.reserveA
-            let amountB = FlowDEX.reserveB
-            
-            FlowDEX.reserveA = 0.0
-            FlowDEX.reserveB = 0.0
-            FlowDEX.totalSupply = 0.0
-            
-            return (amountA, amountB)
-        }
-    }
-
-    // Enhanced Minter resource
+    // Minter resource for liquidity tokens
     access(all) resource Minter {
         access(all) fun mint(amount: UFix64, recipient: &{FungibleToken.Receiver}) {
             pre {
@@ -140,7 +66,7 @@ access(all) contract FlowDEX {
         }
     }
 
-    // Core AMM functions with enhanced features
+    // Core AMM functions
     access(all) fun addLiquidity(amountA: UFix64, amountB: UFix64, minLiquidity: UFix64): UFix64 {
         pre {
             amountA > 0.0: "Amount A must be positive"
@@ -156,18 +82,10 @@ access(all) contract FlowDEX {
             }
             self.totalSupply = self.MINIMUM_LIQUIDITY
         } else {
-            // Subsequent liquidity provision with price impact protection
+            // Subsequent liquidity provision
             let liquidityA = amountA * self.totalSupply / self.reserveA
             let liquidityB = amountB * self.totalSupply / self.reserveB
             liquidity = min(liquidityA, liquidityB)
-            
-            // Check for price impact (max 5%)
-            let priceImpactA = abs(amountA * self.totalSupply / self.reserveA - liquidity) / liquidity
-            let priceImpactB = abs(amountB * self.totalSupply / self.reserveB - liquidity) / liquidity
-            pre {
-                priceImpactA <= 0.05: "Price impact too high for token A"
-                priceImpactB <= 0.05: "Price impact too high for token B"
-            }
         }
 
         pre {
@@ -177,7 +95,6 @@ access(all) contract FlowDEX {
         // Update reserves
         self.reserveA = self.reserveA + amountA
         self.reserveB = self.reserveB + amountB
-        self.kLast = self.reserveA * self.reserveB
 
         // Mint liquidity tokens
         self.totalSupply = self.totalSupply + liquidity
@@ -204,7 +121,6 @@ access(all) contract FlowDEX {
         // Update reserves
         self.reserveA = self.reserveA - amountA
         self.reserveB = self.reserveB - amountB
-        self.kLast = self.reserveA * self.reserveB
 
         // Burn liquidity tokens
         self.totalSupply = self.totalSupply - liquidity
@@ -224,22 +140,13 @@ access(all) contract FlowDEX {
         let amountInWithFee = amountIn * (10000.0 - self.SWAP_FEE) / 10000.0
         let amountOut = self.reserveB * amountInWithFee / (self.reserveA + amountInWithFee)
 
-        // Calculate protocol fee
-        let protocolFeeAmount = amountIn * self.PROTOCOL_FEE / 10000.0
-        let swapFeeAmount = amountIn - amountInWithFee - protocolFeeAmount
-
         pre {
             amountOut >= minAmountOut: "Insufficient output amount"
-            amountOut < self.reserveB: "Insufficient liquidity"
         }
 
         // Update reserves
         self.reserveA = self.reserveA + amountIn
         self.reserveB = self.reserveB - amountOut
-
-        // Accumulate protocol fees
-        self.protocolFeeA = self.protocolFeeA + protocolFeeAmount
-        self.totalVolume24h = self.totalVolume24h + amountIn
 
         emit SwapExecuted(amountIn: amountIn, amountOut: amountOut, tokenIn: "A", tokenOut: "B", trader: self.account.address)
 
@@ -256,29 +163,20 @@ access(all) contract FlowDEX {
         let amountInWithFee = amountIn * (10000.0 - self.SWAP_FEE) / 10000.0
         let amountOut = self.reserveA * amountInWithFee / (self.reserveB + amountInWithFee)
 
-        // Calculate protocol fee
-        let protocolFeeAmount = amountIn * self.PROTOCOL_FEE / 10000.0
-        let swapFeeAmount = amountIn - amountInWithFee - protocolFeeAmount
-
         pre {
             amountOut >= minAmountOut: "Insufficient output amount"
-            amountOut < self.reserveA: "Insufficient liquidity"
         }
 
         // Update reserves
         self.reserveB = self.reserveB + amountIn
         self.reserveA = self.reserveA - amountOut
 
-        // Accumulate protocol fees
-        self.protocolFeeB = self.protocolFeeB + protocolFeeAmount
-        self.totalVolume24h = self.totalVolume24h + amountIn
-
         emit SwapExecuted(amountIn: amountIn, amountOut: amountOut, tokenIn: "B", tokenOut: "A", trader: self.account.address)
 
         return amountOut
     }
 
-    // Enhanced view functions
+    // View functions
     access(all) fun getReserveA(): UFix64 {
         return self.reserveA
     }
@@ -305,36 +203,6 @@ access(all) contract FlowDEX {
         return self.reserveA / self.reserveB
     }
 
-    access(all) fun getK(): UFix64 {
-        return self.reserveA * self.reserveB
-    }
-
-    access(all) fun getProtocolFees(): (UFix64, UFix64) {
-        return (self.protocolFeeA, self.protocolFeeB)
-    }
-
-    access(all) fun getVolume24h(): UFix64 {
-        return self.totalVolume24h
-    }
-
-    access(all) fun getLiquidityValue(): UFix64 {
-        return self.reserveA + (self.reserveB * self.getPriceA())
-    }
-
-    access(all) fun calculatePriceImpact(amountIn: UFix64, direction: String): UFix64 {
-        if direction == "AtoB" {
-            let amountOut = self.reserveB * amountIn / (self.reserveA + amountIn)
-            let newPrice = amountOut / amountIn
-            let currentPrice = self.getPriceA()
-            return abs(newPrice - currentPrice) / currentPrice * 100.0
-        } else {
-            let amountOut = self.reserveA * amountIn / (self.reserveB + amountIn)
-            let newPrice = amountOut / amountIn
-            let currentPrice = self.getPriceB()
-            return abs(newPrice - currentPrice) / currentPrice * 100.0
-        }
-    }
-
     // Utility functions
     access(all) fun createEmptyVault(): @FungibleToken.Vault { 
         return <-create LiquidityVault(balance: 0.0) 
@@ -342,10 +210,6 @@ access(all) contract FlowDEX {
 
     access(all) fun createMinter(): &Minter { 
         return &self.minter as &Minter 
-    }
-
-    access(all) fun getAdmin(): &Admin { 
-        return &self.admin as &Admin 
     }
 
     // Helper function for square root calculation
@@ -365,38 +229,21 @@ access(all) contract FlowDEX {
         }
     }
 
-    // Helper function for absolute value
-    access(all) fun abs(x: UFix64): UFix64 {
-        if x < 0.0 {
-            return -x
-        }
-        return x
-    }
-
     // State variables
-    access(all) var admin: &Admin
     access(all) var minter: &Minter
 
     init() {
         // Initialize constants
         self.FEE_DENOMINATOR = 10000.0
         self.SWAP_FEE = 30.0  // 0.3%
-        self.PROTOCOL_FEE = 50.0  // 0.5%
         self.MINIMUM_LIQUIDITY = 1000.0
-        self.MAX_FEE = 1000.0  // 10%
 
         // Initialize state
         self.reserveA = 0.0
         self.reserveB = 0.0
         self.totalSupply = 0.0
-        self.kLast = 0.0
-        self.protocolFeeA = 0.0
-        self.protocolFeeB = 0.0
-        self.totalVolume24h = 0.0
-        self.lastUpdateTime = 0.0
 
-        // Create admin and minter
-        self.admin <- create Admin()
+        // Create minter
         self.minter <- create Minter()
 
         // Set up liquidity token vault

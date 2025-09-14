@@ -3,10 +3,11 @@ import FungibleToken from 0x9a0766d93b6608b7
 import TestToken from 0xf8d6e0586b0a20c7
 import TestToken2 from 0xf8d6e0586b0a20c7
 
-transaction(amountA: UFix64, amountB: UFix64) {
+transaction(amountA: UFix64, amountB: UFix64, minLiquidity: UFix64) {
     let tokenAVault: &FungibleToken.Vault
     let tokenBVault: &FungibleToken.Vault
-    let dexRef: &FlowDEX.DEX
+    let dexRef: &FlowDEX
+    let liquidityReceiver: &{FungibleToken.Receiver}
 
     prepare(acct: AuthAccount) {
         // Get token vaults
@@ -17,17 +18,23 @@ transaction(amountA: UFix64, amountB: UFix64) {
             .borrow() ?? panic("Could not borrow TestToken vault")
         
         // Get DEX reference
-        self.dexRef = acct.getCapability<&FlowDEX.DEX>(/public/flowDEX)
+        self.dexRef = acct.getCapability<&FlowDEX>(/public/flowDEX)
             .borrow() ?? panic("Could not borrow DEX reference")
+        
+        // Get liquidity token receiver
+        self.liquidityReceiver = acct.getCapability<&{FungibleToken.Receiver}>(/public/FlowDEXLiquidityReceiver)
+            .borrow() ?? panic("Could not borrow liquidity receiver")
     }
 
     execute {
         // Add liquidity to the DEX
-        self.dexRef.addLiquidity(
-            tokenAVault: &self.tokenAVault,
-            tokenBVault: &self.tokenBVault,
+        let liquidity = self.dexRef.addLiquidity(
             amountA: amountA,
-            amountB: amountB
+            amountB: amountB,
+            minLiquidity: minLiquidity
         )
+        
+        // Mint liquidity tokens to user
+        self.dexRef.createMinter().mint(amount: liquidity, recipient: self.liquidityReceiver)
     }
 }

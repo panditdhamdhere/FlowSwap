@@ -1,37 +1,37 @@
-import FungibleToken from 0xee82856bf20e2aa6
+import FungibleToken from 0x9a0766d93b6608b7
 
-pub contract TestToken2: FungibleToken {
+access(all) contract TestToken2: FungibleToken {
 
-	pub let TotalSupply: UFix64
-	pub var totalSupply: UFix64
-	pub var minter: &Minter
+	access(all) let TotalSupply: UFix64
+	access(all) var totalSupply: UFix64
+	access(all) var minter: &Minter
 
-	pub resource Vault: FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance {
-		pub var balance: UFix64
+	access(all) resource Vault: FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance {
+		access(all) var balance: UFix64
 		init(balance: UFix64) { self.balance = balance }
-		pub fun withdraw(amount: UFix64): @FungibleToken.Vault {
-			pre { amount > 0.0: "positive"; self.balance >= amount: "insufficient" }
+		access(all) fun withdraw(amount: UFix64): @FungibleToken.Vault {
+			pre { amount > 0.0: "Amount must be positive"; self.balance >= amount: "Insufficient balance" }
 			self.balance = self.balance - amount
 			return <-create Vault(balance: amount)
 		}
-		pub fun deposit(from: @FungibleToken.Vault) {
+		access(all) fun deposit(from: @FungibleToken.Vault) {
 			let v <- from as! @TestToken2.Vault
 			self.balance = self.balance + v.balance
 			destroy v
 		}
-		pub fun getBalance(): UFix64 { return self.balance }
+		access(all) fun getBalance(): UFix64 { return self.balance }
 	}
 
-	pub resource Minter {
-		pub fun mint(amount: UFix64, recipient: &{FungibleToken.Receiver}) {
-			pre { amount > 0.0: "positive" }
+	access(all) resource Minter {
+		access(all) fun mint(amount: UFix64, recipient: &{FungibleToken.Receiver}) {
+			pre { amount > 0.0: "Amount must be positive" }
 			TestToken2.totalSupply = TestToken2.totalSupply + amount
 			recipient.deposit(from: <-create Vault(balance: amount))
 		}
 	}
 
-	pub fun createEmptyVault(): @FungibleToken.Vault { return <-create Vault(balance: 0.0) }
-	pub fun createMinter(): &Minter { return &self.minter as &Minter }
+	access(all) fun createEmptyVault(): @FungibleToken.Vault { return <-create Vault(balance: 0.0) }
+	access(all) fun createMinter(): &Minter { return &self.minter as &Minter }
 
 	init(initialSupply: UFix64) {
 		self.TotalSupply = 1_000_000_000.0

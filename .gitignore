@@ -72,6 +72,11 @@ testnet.pkey
 *.pkey
 *.key
 
+# Flow specific sensitive files
+flow-minimal.json
+flow-accounts.json
+*.flow.json.backup
+
 # IDE files
 Thumbs.db
 ehthumbs.db
