@@ -1,10 +1,10 @@
 import * as fcl from '@onflow/fcl'
 
-// Emulator contract addresses (for testing)
-const FLOW_DEX_ADDRESS = "0xf8d6e0586b0a20c7"
-const FLOW_TOKEN_ADDRESS = "0xf8d6e0586b0a20c7"  // Flow Token (FLOW)
-const USDC_TOKEN_ADDRESS = "0xf8d6e0586b0a20c7"   // USD Coin (USDC)
-const FUNGIBLE_TOKEN_ADDRESS = "0xee82856bf20e2aa6"
+// Testnet contract addresses (deployed contracts)
+const FLOW_DEX_ADDRESS = "0x18f0d1d9cfa52c6d"
+const FLOW_TOKEN_ADDRESS = "0x18f0d1d9cfa52c6d"  // TestToken (FLOW)
+const USDC_TOKEN_ADDRESS = "0x0ea4b4ea56a1260c"   // TestToken2 (USDC)
+const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
 
 const ADD_LIQUIDITY_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
