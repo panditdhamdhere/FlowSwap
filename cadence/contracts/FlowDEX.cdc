@@ -78,6 +78,26 @@ access(all) contract FlowDEX {
         return amountOut
     }
 
+    // Removes liquidity by percentage (demo only, no LP tokens)
+    // percent: 0.0 to 100.0
+    access(all) fun removeLiquidity(percent: UFix64): [UFix64] {
+        if percent <= 0.0 {
+            return [0.0, 0.0]
+        }
+        if percent > 100.0 {
+            panic("PERCENT_TOO_HIGH")
+        }
+        let fraction: UFix64 = percent / 100.0
+        let outA: UFix64 = self.reserveA * fraction
+        let outB: UFix64 = self.reserveB * fraction
+        if outA > self.reserveA || outB > self.reserveB {
+            panic("INSUFFICIENT_LIQUIDITY")
+        }
+        self.reserveA = self.reserveA - outA
+        self.reserveB = self.reserveB - outB
+        return [outA, outB]
+    }
+
     init() {
         self.reserveA = 0.0
         self.reserveB = 0.0

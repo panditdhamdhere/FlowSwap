@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
-import { addLiquidity, swapAForB, getQuote } from './transactions';
+import { addLiquidity, swapAForB, getQuote, removeLiquidityPercent } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import * as fcl from '@onflow/fcl';
 
@@ -467,8 +467,8 @@ const App: React.FC = () => {
   const handleRemoveLiquidity = async (percent: number) => {
     try {
       console.log('Remove liquidity:', { percent });
-      // Not implemented on-chain yet
-      setToast({ type: 'error', message: 'Remove liquidity not implemented yet' });
+      const txId = await removeLiquidityPercent(percent);
+      setToast({ type: 'success', message: `Remove submitted: ${String(txId).slice(0, 8)}...` });
     } catch (error) {
       console.error('Remove liquidity failed:', error);
       setToast({ type: 'error', message: 'Remove liquidity failed' });

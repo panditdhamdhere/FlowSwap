@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as fcl from '@onflow/fcl'
 import { 
   addLiquidity, 
-  removeLiquidity, 
+  removeLiquidityPercent, 
   swapAForB, 
   swapBForA, 
   getReserves, 
@@ -47,15 +47,15 @@ describe('Transaction Functions', () => {
     })
   })
 
-  describe('removeLiquidity', () => {
+  describe('removeLiquidityPercent', () => {
     it('should call fcl.mutate with correct parameters', async () => {
       const mockMutate = vi.mocked(fcl.mutate)
       mockMutate.mockResolvedValue('tx-hash')
 
-      await removeLiquidity(50, 10, 20)
+      await removeLiquidityPercent(50)
 
       expect(mockMutate).toHaveBeenCalledWith({
-        cadence: expect.stringContaining('transaction(liquidity: UFix64, minAmountA: UFix64, minAmountB: UFix64)'),
+        cadence: expect.stringContaining('transaction(percent: UFix64)'),
         args: expect.any(Function)
       })
     })
@@ -64,7 +64,7 @@ describe('Transaction Functions', () => {
       const mockMutate = vi.mocked(fcl.mutate)
       mockMutate.mockResolvedValue('tx-hash')
 
-      await removeLiquidity(50)
+      await removeLiquidityPercent(50)
 
       expect(mockMutate).toHaveBeenCalled()
     })

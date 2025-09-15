@@ -69,9 +69,22 @@ export async function getReserves() {
   })
 }
 
-// Note: These functions will be available in future contract versions
-export async function removeLiquidity(_liquidity: number, _minAmountA: number = 0, _minAmountB: number = 0) {
-  throw new Error("Remove liquidity not yet implemented in deployed contract")
+const REMOVE_LIQ_TX = `
+import FlowDEX from ${FLOW_DEX_ADDRESS}
+
+transaction(percent: UFix64) {
+  execute {
+    let outs = FlowDEX.removeLiquidity(percent: percent)
+    log(outs)
+  }
+}
+`
+
+export async function removeLiquidityPercent(percent: number) {
+  return fcl.mutate({
+    cadence: REMOVE_LIQ_TX,
+    args: (arg, t) => [arg(percent.toFixed(1), t.UFix64)]
+  })
 }
 
 export async function swapAForB(_amountIn: number, _minAmountOut: number = 0) {
