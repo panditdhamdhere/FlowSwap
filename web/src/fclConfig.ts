@@ -37,7 +37,7 @@ export function initFCL(env: 'emulator' | 'testnet' = 'emulator') {
   const contracts = CONTRACTS[env]
   
   config()
-    .put('app.detail.title', 'Flow DEX')
+    .put('app.detail.title', 'FlowSwap')
     .put('app.detail.icon', 'https://avatars.githubusercontent.com/u/62387156')
     .put('flow.network', cfg.network)
     .put('accessNode.api', cfg.accessNode)

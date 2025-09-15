@@ -538,7 +538,7 @@ const App: React.FC = () => {
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">F</span>
               </div>
-              <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">FlowDEX</h1>
+                     <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">FlowSwap</h1>
           </motion.div>
             
             <div className="flex items-center space-x-4">
@@ -563,9 +563,9 @@ const App: React.FC = () => {
           animate={{ opacity: 1, y: 0 }} 
           transition={{ delay: 0.4 }}
         >
-          <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-            Decentralized Exchange
-          </h2>
+                 <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+                   FlowSwap DEX
+                 </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               Trade tokens, provide liquidity, and earn rewards on the Flow blockchain
           </p>

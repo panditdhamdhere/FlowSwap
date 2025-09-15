@@ -1,4 +1,4 @@
-# Flow DEX - Decentralized Exchange on Flow Blockchain
+# FlowSwap - Decentralized Exchange on Flow Blockchain
 
 A production-ready decentralized exchange (DEX) built on the Flow blockchain using Cadence smart contracts and React frontend.
 
