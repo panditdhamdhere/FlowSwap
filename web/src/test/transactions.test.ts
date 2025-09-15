@@ -29,7 +29,7 @@ describe('Transaction Functions', () => {
       const mockMutate = vi.mocked(fcl.mutate)
       mockMutate.mockResolvedValue('tx-hash')
 
-      await addLiquidity(100, 200, 50)
+      await addLiquidity(100, 200)
 
       expect(mockMutate).toHaveBeenCalledWith({
         cadence: expect.stringContaining('transaction(amountA: UFix64, amountB: UFix64, minLiquidity: UFix64)'),

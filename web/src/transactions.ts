@@ -2,9 +2,10 @@ import * as fcl from '@onflow/fcl'
 
 // Testnet contract addresses (deployed contracts)
 const FLOW_DEX_ADDRESS = "0x18f0d1d9cfa52c6d"
-const FLOW_TOKEN_ADDRESS = "0x18f0d1d9cfa52c6d"  // TestToken (FLOW)
-const USDC_TOKEN_ADDRESS = "0x0ea4b4ea56a1260c"   // TestToken2 (USDC)
-const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
+// Note: These addresses are available for future use when implementing token interactions
+// const FLOW_TOKEN_ADDRESS = "0x18f0d1d9cfa52c6d"  // TestToken (FLOW)
+// const USDC_TOKEN_ADDRESS = "0x0ea4b4ea56a1260c"   // TestToken2 (USDC)
+// const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
 
 const ADD_LIQUIDITY_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
@@ -50,15 +51,15 @@ export async function getReserves() {
 }
 
 // Note: These functions will be available in future contract versions
-export async function removeLiquidity(liquidity: number, minAmountA: number = 0, minAmountB: number = 0) {
+export async function removeLiquidity(_liquidity: number, _minAmountA: number = 0, _minAmountB: number = 0) {
   throw new Error("Remove liquidity not yet implemented in deployed contract")
 }
 
-export async function swapAForB(amountIn: number, minAmountOut: number = 0) {
+export async function swapAForB(_amountIn: number, _minAmountOut: number = 0) {
   throw new Error("Token swaps not yet implemented in deployed contract")
 }
 
-export async function swapBForA(amountIn: number, minAmountOut: number = 0) {
+export async function swapBForA(_amountIn: number, _minAmountOut: number = 0) {
   throw new Error("Token swaps not yet implemented in deployed contract")
 }
 
@@ -66,6 +67,6 @@ export async function getPrices() {
   throw new Error("Price calculation not yet implemented in deployed contract")
 }
 
-export async function getQuote(amountIn: number, swapDirection: 'AtoB' | 'BtoA') {
+export async function getQuote(_amountIn: number, _swapDirection: 'AtoB' | 'BtoA') {
   throw new Error("Quote calculation not yet implemented in deployed contract")
 }
