@@ -23,8 +23,27 @@ transaction(amountA: UFix64, amountB: UFix64) {
 }
 `
 
-// Note: Our deployed FlowDEX contract is simplified and doesn't have removeLiquidity or swap functions yet
-// These will be added in future versions
+const SWAP_A_TO_B_TX = `
+import FlowDEX from ${FLOW_DEX_ADDRESS}
+
+transaction(amountIn: UFix64, minAmountOut: UFix64) {
+  execute {
+    let out = FlowDEX.swapAForB(amountIn: amountIn, minAmountOut: minAmountOut)
+    log(out)
+  }
+}
+`
+
+const SWAP_B_TO_A_TX = `
+import FlowDEX from ${FLOW_DEX_ADDRESS}
+
+transaction(amountIn: UFix64, minAmountOut: UFix64) {
+  execute {
+    let out = FlowDEX.swapBForA(amountIn: amountIn, minAmountOut: minAmountOut)
+    log(out)
+  }
+}
+`
 
 const GET_RESERVES_SCRIPT = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
@@ -56,11 +75,23 @@ export async function removeLiquidity(_liquidity: number, _minAmountA: number = 
 }
 
 export async function swapAForB(_amountIn: number, _minAmountOut: number = 0) {
-  throw new Error("Token swaps not yet implemented in deployed contract")
+  return fcl.mutate({
+    cadence: SWAP_A_TO_B_TX,
+    args: (arg, t) => [
+      arg(_amountIn.toFixed(1), t.UFix64),
+      arg(_minAmountOut.toFixed(1), t.UFix64)
+    ]
+  })
 }
 
 export async function swapBForA(_amountIn: number, _minAmountOut: number = 0) {
-  throw new Error("Token swaps not yet implemented in deployed contract")
+  return fcl.mutate({
+    cadence: SWAP_B_TO_A_TX,
+    args: (arg, t) => [
+      arg(_amountIn.toFixed(1), t.UFix64),
+      arg(_minAmountOut.toFixed(1), t.UFix64)
+    ]
+  })
 }
 
 export async function getPrices() {
