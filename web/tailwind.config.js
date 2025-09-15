@@ -8,6 +8,11 @@ export default {
   theme: {
     extend: {
       colors: {
+        flow: {
+          primary: '#00D4FF',
+          secondary: '#6C5CE7',
+          dark: '#2D3748',
+        },
         brand: {
           50: '#eff6ff',
           100: '#dbeafe',

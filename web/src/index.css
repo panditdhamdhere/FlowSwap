@@ -7,6 +7,10 @@
 :root {
   --shadow: rgba(0, 0, 0, 0.1);
   --shadow-lg: rgba(0, 0, 0, 0.15);
+  /* Flow official colors */
+  --flow-primary: #00D4FF;
+  --flow-secondary: #6C5CE7;
+  --flow-dark: #2D3748;
 }
 
 .dark {
@@ -46,13 +50,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-blue-500 dark:bg-blue-400;
+  background: var(--flow-primary);
   border-radius: 4px;
   transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-blue-600 dark:bg-blue-300;
+  background: var(--flow-secondary);
 }
 
 /* Animations */
@@ -79,10 +83,10 @@ body {
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 40px rgba(0, 212, 255, 0.6);
   }
 }
 
@@ -293,14 +297,14 @@ body {
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, var(--flow-primary) 0%, var(--flow-secondary) 100%);
   color: white;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 212, 255, 0.4);
 }
 
 .btn-secondary {
@@ -340,8 +344,8 @@ body {
 }
 
 .input:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  border-color: var(--flow-primary);
+  box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.1);
   transform: translateY(-1px);
 }
 
@@ -406,16 +410,18 @@ body {
 /* Custom focus styles */
 .focus-ring:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.2);
 }
 
 /* Text selection */
 ::selection {
-  @apply bg-blue-500 text-white;
+  background: var(--flow-primary);
+  color: white;
 }
 
 ::-moz-selection {
-  @apply bg-blue-500 text-white;
+  background: var(--flow-primary);
+  color: white;
 }
 
 /* Print styles */
