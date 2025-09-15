@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
-import { addLiquidity } from './transactions';
+import { addLiquidity, swapAForB } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import * as fcl from '@onflow/fcl';
 
@@ -345,8 +345,8 @@ const App: React.FC = () => {
 
   const handleSwap = async (amountA: number, amountB: number) => {
     try {
-      console.log('Swapping:', { amountA, amountB });
-      // Swap logic will be implemented when contract supports it
+      console.log('Swapping A→B:', { amountIn: amountA, minAmountOut: amountB });
+      await swapAForB(amountA, amountB);
     } catch (error) {
       console.error('Swap failed:', error);
     }
