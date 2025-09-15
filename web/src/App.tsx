@@ -197,11 +197,12 @@ const PoolInfo: React.FC<{ pairData: any }> = ({ pairData }) => (
 );
 
 // Swap Interface Component
-const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number) => void }> = ({ onSwap }) => {
+const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number) => void; flowBalance?: number }> = ({ onSwap, flowBalance = 0 }) => {
   const [amountIn, setAmountIn] = useState('');
   const [slippage, setSlippage] = useState<number>(0.5);
   const [quote, setQuote] = useState<number>(0);
   const [loadingQuote, setLoadingQuote] = useState<boolean>(false);
+  const [priceImpact, setPriceImpact] = useState<number>(0);
 
   useEffect(() => {
     const run = async () => {
@@ -210,9 +211,14 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
       setLoadingQuote(true);
       try {
         const q = await getQuote(amt, 'AtoB');
-        setQuote(Number(q) || 0);
+        const qNum = Number(q) || 0;
+        setQuote(qNum);
+        const minRecv = qNum * (1 - slippage/100);
+        const impact = qNum > 0 ? (1 - (minRecv / qNum)) * 100 : 0;
+        setPriceImpact(Math.max(0, impact));
       } catch {
         setQuote(0);
+        setPriceImpact(0);
       } finally {
         setLoadingQuote(false);
       }
@@ -239,6 +245,16 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
             label="From"
           token="FLOW"
         />
+        <div className="flex justify-between items-center -mt-2">
+          <span className="text-xs text-gray-600 dark:text-gray-400">Balance: {flowBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} FLOW</span>
+          <button
+            type="button"
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            onClick={() => setAmountIn(String(flowBalance || 0))}
+          >
+            Max
+          </button>
+        </div>
         <div className="flex justify-center">
           <motion.div 
             className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full"
@@ -254,10 +270,10 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">To</label>
             <div className="relative">
               <input
-                type="number"
+            type="number"
                 value={(loadingQuote ? 0 : quote).toFixed(6)}
                 readOnly
-                placeholder="0.0"
+            placeholder="0.0"
                 className="w-full px-4 py-3 pr-16 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -266,6 +282,12 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400">
               Min received ({slippage.toFixed(1)}%): <span className="font-semibold">{minReceived > 0 ? minReceived.toFixed(6) : '0.000000'} USDC</span>
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              Price impact: <span className={`font-semibold ${priceImpact > 5 ? 'text-red-500' : ''}`}>{priceImpact.toFixed(2)}%</span>
+        </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Route: FLOW → USDC
             </div>
           </div>
         
@@ -279,7 +301,7 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
             onChange={(e) => setSlippage(parseFloat(e.target.value) || 0)}
             className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
-        </div>
+          </div>
         <Button onClick={handleSwap} className="w-full">
           Swap Tokens
         </Button>
@@ -320,6 +342,39 @@ const LiquidityInterface: React.FC<{ onLiquidity: (amountA: number, amountB: num
         <Button onClick={handleLiquidity} className="w-full">
           Add Liquidity
             </Button>
+      </div>
+    </Card>
+  );
+};
+
+// Remove Liquidity Component (UI only for now)
+const RemoveLiquidityInterface: React.FC<{ onRemove: (percent: number) => void }> = ({ onRemove }) => {
+  const [percent, setPercent] = useState<number>(25);
+
+  const handleRemove = () => {
+    onRemove(percent);
+  };
+
+  return (
+    <Card>
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Remove Liquidity</h3>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Percentage</label>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={percent}
+            onChange={(e) => setPercent(parseInt(e.target.value) || 0)}
+            className="w-full"
+          />
+          <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">{percent}%</div>
+        </div>
+        <Button onClick={handleRemove} className="w-full">
+          Remove Liquidity
+        </Button>
       </div>
     </Card>
   );
@@ -385,7 +440,7 @@ const FloatingElements: React.FC = () => (
 const App: React.FC = () => {
   const { pairData } = usePairData();
   const { balances } = useBalances();
-  const [activeTab, setActiveTab] = useState<'swap' | 'liquidity'>('swap');
+  const [activeTab, setActiveTab] = useState<'swap' | 'liquidity' | 'remove'>('swap');
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -406,6 +461,17 @@ const App: React.FC = () => {
       await addLiquidity(amountA, amountB);
     } catch (error) {
       console.error('Add liquidity failed:', error);
+    }
+  };
+
+  const handleRemoveLiquidity = async (percent: number) => {
+    try {
+      console.log('Remove liquidity:', { percent });
+      // Not implemented on-chain yet
+      setToast({ type: 'error', message: 'Remove liquidity not implemented yet' });
+    } catch (error) {
+      console.error('Remove liquidity failed:', error);
+      setToast({ type: 'error', message: 'Remove liquidity failed' });
     }
   };
 
@@ -501,6 +567,16 @@ const App: React.FC = () => {
                 >
                   Liquidity
                 </button>
+                <button
+                  onClick={() => setActiveTab('remove')}
+                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+                    activeTab === 'remove'
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Remove
+                </button>
               </div>
 
               {/* Tab Content */}
@@ -514,9 +590,9 @@ const App: React.FC = () => {
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <SwapInterface onSwap={handleSwap} />
+                      <SwapInterface onSwap={handleSwap} flowBalance={Number((balances?.flow || '0').toString().replace(/,/g, ''))} />
                     </motion.div>
-                  ) : (
+                  ) : activeTab === 'liquidity' ? (
                     <motion.div
                       key="liquidity"
                       initial={{ opacity: 0, x: 20 }}
@@ -525,6 +601,16 @@ const App: React.FC = () => {
                       transition={{ duration: 0.3 }}
                     >
                       <LiquidityInterface onLiquidity={handleLiquidity} />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="remove"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <RemoveLiquidityInterface onRemove={handleRemoveLiquidity} />
                     </motion.div>
                   )}
                 </AnimatePresence>
