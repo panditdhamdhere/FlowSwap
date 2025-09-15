@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../store'
+import { setupDemoTokenVaults, ensureBalanceCaps, getTestTokenBalance, getTestToken2Balance } from '../transactions'
 
 export function useBalances() {
   const [balances, setBalances] = useState<{ flow: string; usdc: string }>({ flow: '0', usdc: '0' })
@@ -17,11 +18,18 @@ export function useBalances() {
     setLoading(true)
     setError(null)
     try {
-      // For now, show mock balances for demonstration
-      // In a real implementation, you would query the actual token contracts
+      // Ensure user has vaults and public Balance capabilities
+      await setupDemoTokenVaults().catch(() => {})
+      await ensureBalanceCaps().catch(() => {})
+      const [flowBal, usdcBal] = await Promise.all([
+        getTestTokenBalance(userAddress) as Promise<string>,
+        getTestToken2Balance(userAddress) as Promise<string>,
+      ])
+      const flowNum = parseFloat(flowBal || '0') || 0
+      const usdcNum = parseFloat(usdcBal || '0') || 0
       setBalances({
-        flow: '1,250.50',
-        usdc: '5,000.00'
+        flow: flowNum.toLocaleString(undefined, { maximumFractionDigits: 6 }),
+        usdc: usdcNum.toLocaleString(undefined, { maximumFractionDigits: 6 })
       })
     } catch (error) {
       console.error('Error fetching balances:', error)

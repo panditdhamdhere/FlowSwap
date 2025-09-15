@@ -2,10 +2,10 @@ import * as fcl from '@onflow/fcl'
 
 // Testnet contract addresses (deployed contracts)
 const FLOW_DEX_ADDRESS = "0x18f0d1d9cfa52c6d"
-// Note: These addresses are available for future use when implementing token interactions
-// const FLOW_TOKEN_ADDRESS = "0x18f0d1d9cfa52c6d"  // TestToken (FLOW)
-// const USDC_TOKEN_ADDRESS = "0x0ea4b4ea56a1260c"   // TestToken2 (USDC)
-// const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
+// Token contracts on testnet (our demo tokens acting as FLOW/USDC)
+const TESTTOKEN_ADDRESS = "0x18f0d1d9cfa52c6d"   // TestToken (FLOW demo)
+const TESTTOKEN2_ADDRESS = "0x0ea4b4ea56a1260c"  // TestToken2 (USDC demo)
+const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
 
 const ADD_LIQUIDITY_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
@@ -66,6 +66,153 @@ export async function addLiquidity(amountA: number, amountB: number) {
 export async function getReserves() {
   return fcl.query({
     cadence: GET_RESERVES_SCRIPT
+  })
+}
+
+// ===== Balances: public Balance cap scripts =====
+const GET_TESTTOKEN_BAL = `
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import TestToken from ${TESTTOKEN_ADDRESS}
+
+access(all) fun main(addr: Address): UFix64 {
+  let cap = getAccount(addr)
+    .getCapability<&{FungibleToken.Balance}>(/public/TestTokenBalance)
+  if !cap.check() { return 0.0 }
+  let ref = cap.borrow() ?? panic("Missing TestTokenBalance capability")
+  return ref.balance
+}
+`
+
+const GET_TESTTOKEN2_BAL = `
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import TestToken2 from ${TESTTOKEN2_ADDRESS}
+
+access(all) fun main(addr: Address): UFix64 {
+  let cap = getAccount(addr)
+    .getCapability<&{FungibleToken.Balance}>(/public/TestToken2Balance)
+  if !cap.check() { return 0.0 }
+  let ref = cap.borrow() ?? panic("Missing TestToken2Balance capability")
+  return ref.balance
+}
+`
+
+export async function getTestTokenBalance(address: string) {
+  return fcl.query({
+    cadence: GET_TESTTOKEN_BAL,
+    args: (arg, t) => [arg(address, t.Address)]
+  })
+}
+
+export async function getTestToken2Balance(address: string) {
+  return fcl.query({
+    cadence: GET_TESTTOKEN2_BAL,
+    args: (arg, t) => [arg(address, t.Address)]
+  })
+}
+
+// Transaction to ensure public Balance capabilities are linked for the signer
+const ENSURE_BALANCE_CAPS_TX = `
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import TestToken from ${TESTTOKEN_ADDRESS}
+import TestToken2 from ${TESTTOKEN2_ADDRESS}
+
+transaction() {
+  prepare(acct: auth(Storage, Capabilities) &Account) {
+    // TestToken balance cap
+    let hasCap1 = acct.getCapability<&{FungibleToken.Balance}>(/public/TestTokenBalance).check()
+    if (!hasCap1) {
+      acct.link<&{FungibleToken.Balance}>(/public/TestTokenBalance, target: /storage/TestTokenVault)
+    }
+    // TestToken2 balance cap
+    let hasCap2 = acct.getCapability<&{FungibleToken.Balance}>(/public/TestToken2Balance).check()
+    if (!hasCap2) {
+      acct.link<&{FungibleToken.Balance}>(/public/TestToken2Balance, target: /storage/TestToken2Vault)
+    }
+  }
+}
+`
+
+export async function ensureBalanceCaps() {
+  return fcl.mutate({ cadence: ENSURE_BALANCE_CAPS_TX })
+}
+
+// Setup transaction to create user's vaults if missing and link receiver/balance
+const SETUP_VAULTS_TX = `
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import TestToken from ${TESTTOKEN_ADDRESS}
+import TestToken2 from ${TESTTOKEN2_ADDRESS}
+
+transaction() {
+  prepare(acct: auth(Storage, Capabilities) &Account) {
+    // TestToken vault
+    if acct.borrow<&TestToken.Vault>(from: /storage/TestTokenVault) == nil {
+      acct.save(<-TestToken.createEmptyVault(), to: /storage/TestTokenVault)
+    }
+    if !acct.getCapability<&{FungibleToken.Receiver}>(/public/TestTokenReceiver).check() {
+      acct.link<&{FungibleToken.Receiver}>(/public/TestTokenReceiver, target: /storage/TestTokenVault)
+    }
+    if !acct.getCapability<&{FungibleToken.Balance}>(/public/TestTokenBalance).check() {
+      acct.link<&{FungibleToken.Balance}>(/public/TestTokenBalance, target: /storage/TestTokenVault)
+    }
+
+    // TestToken2 vault
+    if acct.borrow<&TestToken2.Vault>(from: /storage/TestToken2Vault) == nil {
+      acct.save(<-TestToken2.createEmptyVault(), to: /storage/TestToken2Vault)
+    }
+    if !acct.getCapability<&{FungibleToken.Receiver}>(/public/TestToken2Receiver).check() {
+      acct.link<&{FungibleToken.Receiver}>(/public/TestToken2Receiver, target: /storage/TestToken2Vault)
+    }
+    if !acct.getCapability<&{FungibleToken.Balance}>(/public/TestToken2Balance).check() {
+      acct.link<&{FungibleToken.Balance}>(/public/TestToken2Balance, target: /storage/TestToken2Vault)
+    }
+  }
+}
+`
+
+export async function setupDemoTokenVaults() {
+  return fcl.mutate({ cadence: SETUP_VAULTS_TX })
+}
+
+// ===== Faucet: Mint test tokens =====
+const MINT_TESTTOKEN_TX = `
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import TestToken from ${TESTTOKEN_ADDRESS}
+
+transaction(amount: UFix64) {
+  prepare(acct: auth(Storage) &Account) {
+    let minter = TestToken.getAdmin().createMinter()
+    let receiver = acct.getCapability<&{FungibleToken.Receiver}>(/public/TestTokenReceiver)
+      .borrow() ?? panic("Missing TestTokenReceiver capability")
+    minter.mint(amount: amount, recipient: receiver)
+  }
+}
+`
+
+const MINT_TESTTOKEN2_TX = `
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import TestToken2 from ${TESTTOKEN2_ADDRESS}
+
+transaction(amount: UFix64) {
+  prepare(acct: auth(Storage) &Account) {
+    let minter = TestToken2.getAdmin().createMinter()
+    let receiver = acct.getCapability<&{FungibleToken.Receiver}>(/public/TestToken2Receiver)
+      .borrow() ?? panic("Missing TestToken2Receiver capability")
+    minter.mint(amount: amount, recipient: receiver)
+  }
+}
+`
+
+export async function mintTestToken(amount: number = 1000) {
+  return fcl.mutate({
+    cadence: MINT_TESTTOKEN_TX,
+    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)]
+  })
+}
+
+export async function mintTestToken2(amount: number = 1000) {
+  return fcl.mutate({
+    cadence: MINT_TESTTOKEN2_TX,
+    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)]
   })
 }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
-import { addLiquidity, swapAForB, getQuote, removeLiquidityPercent } from './transactions';
+import { addLiquidity, swapAForB, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2 } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import * as fcl from '@onflow/fcl';
 
@@ -380,6 +380,32 @@ const RemoveLiquidityInterface: React.FC<{ onRemove: (percent: number) => void }
   );
 };
 
+// Faucet Component
+const Faucet: React.FC<{ onMint: (token: 'FLOW' | 'USDC') => void }> = ({ onMint }) => (
+  <Card>
+    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Test Token Faucet</h3>
+    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+      Get test tokens to try the DEX
+    </p>
+    <div className="space-y-3">
+      <Button 
+        onClick={() => onMint('FLOW')} 
+        className="w-full"
+        variant="secondary"
+      >
+        Mint 1000 FLOW
+      </Button>
+      <Button 
+        onClick={() => onMint('USDC')} 
+        className="w-full"
+        variant="secondary"
+      >
+        Mint 1000 USDC
+      </Button>
+    </div>
+  </Card>
+);
+
 // User Balances Component
 const UserBalances: React.FC<{ balances: any }> = ({ balances }) => (
   <Card>
@@ -407,8 +433,8 @@ const UserBalances: React.FC<{ balances: any }> = ({ balances }) => (
           {balances?.usdc || '0.00'}
         </span>
       </div>
-      </div>
-    </Card>
+    </div>
+  </Card>
 );
 
 // Floating Elements Component
@@ -459,8 +485,23 @@ const App: React.FC = () => {
     try {
       console.log('Adding liquidity:', { amountA, amountB });
       await addLiquidity(amountA, amountB);
+      setToast({ type: 'success', message: `Liquidity added!` });
     } catch (error) {
       console.error('Add liquidity failed:', error);
+      setToast({ type: 'error', message: 'Add liquidity failed' });
+    }
+  };
+
+  const handleMint = async (token: 'FLOW' | 'USDC') => {
+    try {
+      console.log('Minting token:', token);
+      await (token === 'FLOW' 
+        ? mintTestToken(1000)
+        : mintTestToken2(1000));
+      setToast({ type: 'success', message: `Minted 1000 ${token}!` });
+    } catch (error) {
+      console.error('Mint failed:', error);
+      setToast({ type: 'error', message: `Mint ${token} failed` });
     }
   };
 
@@ -531,11 +572,12 @@ const App: React.FC = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Pool Info */}
-          <div className="lg:col-span-1">
-            <PoolInfo pairData={pairData} />
-            <UserBalances balances={balances} />
-          </div>
+                {/* Left Column - Pool Info */}
+                <div className="lg:col-span-1">
+                  <PoolInfo pairData={pairData} />
+                  <Faucet onMint={handleMint} />
+                  <UserBalances balances={balances} />
+                </div>
 
           {/* Right Column - Trading Interface */}
           <div className="lg:col-span-2">
