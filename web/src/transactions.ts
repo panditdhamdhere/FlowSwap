@@ -64,9 +64,37 @@ export async function swapBForA(_amountIn: number, _minAmountOut: number = 0) {
 }
 
 export async function getPrices() {
-  throw new Error("Price calculation not yet implemented in deployed contract")
+  const result = await getReserves()
+  const [reserveAStr, reserveBStr] = result as [string, string]
+  const reserveA = parseFloat(reserveAStr) || 0
+  const reserveB = parseFloat(reserveBStr) || 0
+
+  const priceA = reserveB > 0 ? reserveA / reserveB : 0
+  const priceB = reserveA > 0 ? reserveB / reserveA : 0
+
+  return { priceA, priceB, reserveA, reserveB }
 }
 
 export async function getQuote(_amountIn: number, _swapDirection: 'AtoB' | 'BtoA') {
-  throw new Error("Quote calculation not yet implemented in deployed contract")
+  if (_amountIn <= 0) return 0
+
+  const result = await getReserves()
+  const [reserveAStr, reserveBStr] = result as [string, string]
+  const reserveA = parseFloat(reserveAStr) || 0
+  const reserveB = parseFloat(reserveBStr) || 0
+
+  const feeMultiplier = 0.997 // 0.3% fee
+  const amountInWithFee = _amountIn * feeMultiplier
+
+  if (_swapDirection === 'AtoB') {
+    if (reserveA <= 0 || reserveB <= 0) return 0
+    const numerator = amountInWithFee * reserveB
+    const denominator = reserveA + amountInWithFee
+    return numerator / denominator
+  } else {
+    if (reserveA <= 0 || reserveB <= 0) return 0
+    const numerator = amountInWithFee * reserveA
+    const denominator = reserveB + amountInWithFee
+    return numerator / denominator
+  }
 }
