@@ -3,40 +3,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom CSS variables for animations and effects */
 :root {
-  /* Light theme colors */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-tertiary: #64748b;
-  --accent-primary: #3b82f6;
-  --accent-secondary: #8b5cf6;
-  --accent-tertiary: #06b6d4;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --border: #e2e8f0;
   --shadow: rgba(0, 0, 0, 0.1);
   --shadow-lg: rgba(0, 0, 0, 0.15);
 }
 
-[data-theme="dark"] {
-  /* Dark theme colors */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --accent-primary: #60a5fa;
-  --accent-secondary: #a78bfa;
-  --accent-tertiary: #22d3ee;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --error: #f87171;
-  --border: #475569;
+.dark {
   --shadow: rgba(0, 0, 0, 0.3);
   --shadow-lg: rgba(0, 0, 0, 0.4);
 }
@@ -57,8 +30,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
   transition: all 0.3s ease;
   overflow-x: hidden;
 }
@@ -69,18 +41,18 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-tertiary);
+  @apply bg-gray-200 dark:bg-gray-700;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-primary);
+  @apply bg-blue-500 dark:bg-blue-400;
   border-radius: 4px;
   transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-secondary);
+  @apply bg-blue-600 dark:bg-blue-300;
 }
 
 /* Animations */
@@ -429,23 +401,7 @@ body {
   }
 }
 
-/* Dark mode specific styles */
-[data-theme="dark"] .card {
-  background: var(--bg-secondary);
-  border-color: var(--border);
-}
-
-[data-theme="dark"] .input {
-  background: var(--bg-secondary);
-  border-color: var(--border);
-  color: var(--text-primary);
-}
-
-[data-theme="dark"] .btn-secondary {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border-color: var(--border);
-}
+/* Dark mode specific styles - now handled by Tailwind classes */
 
 /* Custom focus styles */
 .focus-ring:focus {
@@ -455,13 +411,11 @@ body {
 
 /* Text selection */
 ::selection {
-  background: var(--accent-primary);
-  color: white;
+  @apply bg-blue-500 text-white;
 }
 
 ::-moz-selection {
-  background: var(--accent-primary);
-  color: white;
+  @apply bg-blue-500 text-white;
 }
 
 /* Print styles */
@@ -474,12 +428,10 @@ body {
 /* High contrast mode */
 @media (prefers-contrast: high) {
   :root {
-    --border: #000000;
     --shadow: rgba(0, 0, 0, 0.5);
   }
   
-  [data-theme="dark"] {
-    --border: #ffffff;
+  .dark {
     --shadow: rgba(255, 255, 255, 0.3);
   }
 }

@@ -3,33 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
 import { addLiquidity } from './transactions';
+import { useTheme } from './contexts/ThemeContext';
 import * as fcl from '@onflow/fcl';
 
 // Theme Toggle Component
 const ThemeToggle: React.FC = () => {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldBeDark = saved === 'dark' || (!saved && prefersDark);
-    setIsDark(shouldBeDark);
-    document.documentElement.classList.toggle('dark', shouldBeDark);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', newTheme);
-  };
+  const { isDark, toggleTheme } = useTheme();
 
   return (
-          <motion.button 
+    <motion.button 
       onClick={toggleTheme}
       className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
     >
       {isDark ? (
         <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -40,16 +26,24 @@ const ThemeToggle: React.FC = () => {
           <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
         </svg>
       )}
+      <span className="ml-2 text-xs text-gray-600 dark:text-gray-400">
+        {isDark ? 'Dark' : 'Light'}
+      </span>
     </motion.button>
   );
 };
 
 // Connect Wallet Component
 const Connect: React.FC = () => {
-  const [user, setUser] = useState({ loggedIn: false, addr: null });
+  const [user, setUser] = useState<{ loggedIn: boolean; addr: string | null }>({ loggedIn: false, addr: null });
 
   useEffect(() => {
-    fcl.currentUser.subscribe(setUser);
+    fcl.currentUser.subscribe((user: any) => {
+      setUser({
+        loggedIn: user.loggedIn || false,
+        addr: user.addr || null
+      });
+    });
   }, []);
 
   const handleConnect = async () => {
@@ -61,11 +55,11 @@ const Connect: React.FC = () => {
   };
 
   return (
-    <motion.button
+          <motion.button 
       onClick={handleConnect}
       className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
       whileHover={{ scale: 1.05, y: -2 }}
-      whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.95 }}
     >
       {user.loggedIn ? (
         <span className="flex items-center gap-2">
@@ -166,15 +160,37 @@ const PoolInfo: React.FC<{ pairData: any }> = ({ pairData }) => (
     <div className="grid grid-cols-2 gap-4">
       <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-          {pairData?.reserveAValue || '0.00'}
+          {pairData?.reserveA?.toLocaleString() || '0.00'}
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">TestToken A</div>
-          </div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">FLOW</div>
+        <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+          ${pairData?.priceA?.toFixed(4) || '0.0000'}
+        </div>
+      </div>
       <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
         <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-          {pairData?.reserveBValue || '0.00'}
+          {pairData?.reserveB?.toLocaleString() || '0.00'}
+        </div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">USDC</div>
+        <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+          ${pairData?.priceB?.toFixed(4) || '0.0000'}
+        </div>
+      </div>
+    </div>
+    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <span className="text-gray-600 dark:text-gray-400">Total Liquidity:</span>
+          <div className="font-semibold text-gray-800 dark:text-gray-200">
+            ${pairData?.liquidity?.toLocaleString() || '0.00'}
           </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">TestToken B</div>
+        </div>
+        <div>
+          <span className="text-gray-600 dark:text-gray-400">24h Volume:</span>
+          <div className="font-semibold text-gray-800 dark:text-gray-200">
+            ${pairData?.volume24h?.toLocaleString() || '0.00'}
+          </div>
+        </div>
       </div>
       </div>
     </Card>
@@ -200,7 +216,7 @@ const SwapInterface: React.FC<{ onSwap: (amountA: number, amountB: number) => vo
           onChange={setAmountA}
           placeholder="0.0"
             label="From"
-          token="TEST1"
+          token="FLOW"
         />
         <div className="flex justify-center">
           <motion.div 
@@ -218,7 +234,7 @@ const SwapInterface: React.FC<{ onSwap: (amountA: number, amountB: number) => vo
           onChange={setAmountB}
           placeholder="0.0"
             label="To"
-          token="TEST2"
+          token="USDC"
         />
         <Button onClick={handleSwap} className="w-full">
           Swap Tokens
@@ -246,16 +262,16 @@ const LiquidityInterface: React.FC<{ onLiquidity: (amountA: number, amountB: num
                 <Input
           value={amountA}
           onChange={setAmountA}
-          placeholder="0.0"
-                  label="Token A Amount"
-          token="TEST1"
+                  placeholder="0.0"
+          label="FLOW Amount"
+          token="FLOW"
                 />
                 <Input
           value={amountB}
           onChange={setAmountB}
-          placeholder="0.0"
-                  label="Token B Amount"
-          token="TEST2"
+                  placeholder="0.0"
+          label="USDC Amount"
+          token="USDC"
         />
         <Button onClick={handleLiquidity} className="w-full">
           Add Liquidity
@@ -271,15 +287,25 @@ const UserBalances: React.FC<{ balances: any }> = ({ balances }) => (
     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Your Balances</h3>
     <div className="space-y-3">
       <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
-        <span className="text-gray-600 dark:text-gray-400">TestToken A</span>
-        <span className="font-semibold text-gray-800 dark:text-gray-200">
-          {balances?.test1 || '0.00'}
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">F</span>
+          </div>
+          <span className="text-gray-600 dark:text-gray-400">FLOW</span>
         </div>
-      <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
-        <span className="text-gray-600 dark:text-gray-400">TestToken B</span>
         <span className="font-semibold text-gray-800 dark:text-gray-200">
-          {balances?.test2 || '0.00'}
+          {balances?.flow || '0.00'}
+        </span>
+      </div>
+      <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">$</span>
+          </div>
+          <span className="text-gray-600 dark:text-gray-400">USDC</span>
+        </div>
+        <span className="font-semibold text-gray-800 dark:text-gray-200">
+          {balances?.usdc || '0.00'}
         </span>
       </div>
       </div>
@@ -313,8 +339,8 @@ const FloatingElements: React.FC = () => (
 
 // Main App Component
 const App: React.FC = () => {
-  const { pairData, loading: pairLoading } = usePairData();
-  const { balances, loading: balancesLoading } = useBalances();
+  const { pairData } = usePairData();
+  const { balances } = useBalances();
   const [activeTab, setActiveTab] = useState<'swap' | 'liquidity'>('swap');
 
   const handleSwap = async (amountA: number, amountB: number) => {
