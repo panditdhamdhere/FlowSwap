@@ -113,7 +113,7 @@ flow accounts add-contract --network testnet --signer <account> ./cadence/contra
 ## Deployed Contracts
 
 ### Flow Testnet Addresses
-- **FlowDEX**: `0x18f0d1d9cfa52c6d`
+- **FlowDEX**: `0x18f0d1d9cfa52c6d` 
 - **TestToken**: `0x18f0d1d9cfa52c6d`
 - **TestToken2**: `0x0ea4b4ea56a1260c`
 - **FungibleToken**: `0x9a0766d93b6608b7` (Flow standard)
@@ -129,7 +129,9 @@ You can verify the deployed contracts on Flow testnet:
 ### FlowDEX Contract
 - **addLiquidity**: Add liquidity to the pool
 - **getReserveA/getReserveB**: Get current reserves
-- **Events**: LiquidityAdded
+- **getQuoteAtoB/getQuoteBtoA**: On-chain quote helpers with 0.3% fee
+- **swapAForB/swapBForA**: On-chain swaps adjusting reserves (demo, no token vault ops)
+- **Events**: LiquidityAdded, Swap
 
 ### Security Features
 - Input validation with pre-conditions

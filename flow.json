@@ -66,11 +66,7 @@
 		},
 		"testnet": {
 			"panditd": [
-				"TestToken",
 				"FlowDEX"
-			],
-			"panditd2": [
-				"TestToken2"
 			]
 		}
 	}

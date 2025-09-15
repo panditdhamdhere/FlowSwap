@@ -1,4 +1,5 @@
-import FungibleToken from 0xee82856bf20e2aa6
+// NOTE: Testnet FT address; update to emulator address when deploying locally
+import FungibleToken from 0x9a0766d93b6608b7
 
 access(all) contract FlowDEX {
 
@@ -50,9 +51,11 @@ access(all) contract FlowDEX {
     // Executes a swap from A to B adjusting reserves; for demo only (no token transfers)
     access(all) fun swapAForB(amountIn: UFix64, minAmountOut: UFix64): UFix64 {
         let amountOut: UFix64 = self.getQuoteAtoB(amountIn: amountIn)
-        pre {
-            amountOut >= minAmountOut: "INSUFFICIENT_OUTPUT_AMOUNT"
-            amountOut <= self.reserveB: "INSUFFICIENT_LIQUIDITY"
+        if amountOut < minAmountOut {
+            panic("INSUFFICIENT_OUTPUT_AMOUNT")
+        }
+        if amountOut > self.reserveB {
+            panic("INSUFFICIENT_LIQUIDITY")
         }
         self.reserveA = self.reserveA + amountIn
         self.reserveB = self.reserveB - amountOut
@@ -63,9 +66,11 @@ access(all) contract FlowDEX {
     // Executes a swap from B to A adjusting reserves; for demo only (no token transfers)
     access(all) fun swapBForA(amountIn: UFix64, minAmountOut: UFix64): UFix64 {
         let amountOut: UFix64 = self.getQuoteBtoA(amountIn: amountIn)
-        pre {
-            amountOut >= minAmountOut: "INSUFFICIENT_OUTPUT_AMOUNT"
-            amountOut <= self.reserveA: "INSUFFICIENT_LIQUIDITY"
+        if amountOut < minAmountOut {
+            panic("INSUFFICIENT_OUTPUT_AMOUNT")
+        }
+        if amountOut > self.reserveA {
+            panic("INSUFFICIENT_LIQUIDITY")
         }
         self.reserveB = self.reserveB + amountIn
         self.reserveA = self.reserveA - amountOut
