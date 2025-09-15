@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
-import { addLiquidity, swapAForB } from './transactions';
+import { addLiquidity, swapAForB, getQuote } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import * as fcl from '@onflow/fcl';
 
@@ -197,14 +197,35 @@ const PoolInfo: React.FC<{ pairData: any }> = ({ pairData }) => (
 );
 
 // Swap Interface Component
-const SwapInterface: React.FC<{ onSwap: (amountA: number, amountB: number) => void }> = ({ onSwap }) => {
-  const [amountA, setAmountA] = useState('');
-  const [amountB, setAmountB] = useState('');
+const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number) => void }> = ({ onSwap }) => {
+  const [amountIn, setAmountIn] = useState('');
+  const [slippage, setSlippage] = useState<number>(0.5);
+  const [quote, setQuote] = useState<number>(0);
+  const [loadingQuote, setLoadingQuote] = useState<boolean>(false);
+
+  useEffect(() => {
+    const run = async () => {
+      const amt = parseFloat(amountIn);
+      if (!amt || amt <= 0) { setQuote(0); return; }
+      setLoadingQuote(true);
+      try {
+        const q = await getQuote(amt, 'AtoB');
+        setQuote(Number(q) || 0);
+      } catch {
+        setQuote(0);
+      } finally {
+        setLoadingQuote(false);
+      }
+    };
+    run();
+  }, [amountIn]);
+
+  const minReceived = quote * (1 - slippage / 100);
 
   const handleSwap = () => {
-    const numAmountA = parseFloat(amountA) || 0;
-    const numAmountB = parseFloat(amountB) || 0;
-    onSwap(numAmountA, numAmountB);
+    const amtIn = parseFloat(amountIn) || 0;
+    const minOut = minReceived > 0 ? minReceived : 0;
+    onSwap(amtIn, minOut);
   };
 
   return (
@@ -212,8 +233,8 @@ const SwapInterface: React.FC<{ onSwap: (amountA: number, amountB: number) => vo
       <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Swap Tokens</h3>
         <div className="space-y-4">
           <Input
-          value={amountA}
-          onChange={setAmountA}
+          value={amountIn}
+          onChange={setAmountIn}
           placeholder="0.0"
             label="From"
           token="FLOW"
@@ -229,13 +250,36 @@ const SwapInterface: React.FC<{ onSwap: (amountA: number, amountB: number) => vo
             </svg>
           </motion.div>
         </div>
-          <Input
-          value={amountB}
-          onChange={setAmountB}
-          placeholder="0.0"
-            label="To"
-          token="USDC"
-        />
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">To</label>
+            <div className="relative">
+              <input
+                type="number"
+                value={(loadingQuote ? 0 : quote).toFixed(6)}
+                readOnly
+                placeholder="0.0"
+                className="w-full px-4 py-3 pr-16 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">USDC</span>
+              </div>
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              Min received ({slippage.toFixed(1)}%): <span className="font-semibold">{minReceived > 0 ? minReceived.toFixed(6) : '0.000000'} USDC</span>
+            </div>
+          </div>
+        
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Slippage (%)</label>
+          <input
+            type="number"
+            min={0}
+            step={0.1}
+            value={slippage}
+            onChange={(e) => setSlippage(parseFloat(e.target.value) || 0)}
+            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
         <Button onClick={handleSwap} className="w-full">
           Swap Tokens
         </Button>
@@ -343,12 +387,16 @@ const App: React.FC = () => {
   const { balances } = useBalances();
   const [activeTab, setActiveTab] = useState<'swap' | 'liquidity'>('swap');
 
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
   const handleSwap = async (amountA: number, amountB: number) => {
     try {
       console.log('Swapping A→B:', { amountIn: amountA, minAmountOut: amountB });
-      await swapAForB(amountA, amountB);
+      const txId = await swapAForB(amountA, amountB);
+      setToast({ type: 'success', message: `Swap submitted: ${String(txId).slice(0, 8)}...` });
     } catch (error) {
       console.error('Swap failed:', error);
+      setToast({ type: 'error', message: 'Swap failed' });
     }
   };
 
@@ -396,6 +444,12 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {toast && (
+          <div className={`fixed right-4 top-20 z-50 px-4 py-3 rounded-xl shadow-lg ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+               onAnimationEnd={() => setTimeout(() => setToast(null), 3000)}>
+            {toast.message}
+          </div>
+        )}
         <motion.div 
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }} 
