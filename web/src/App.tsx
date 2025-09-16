@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
-import { addLiquidity, swapAForB, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2 } from './transactions';
+import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2 } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
+import { Logo } from './components/Logo';
 import * as fcl from '@onflow/fcl';
 
 // Theme Toggle Component
@@ -75,7 +76,7 @@ const Connect: React.FC = () => {
 
 // Card Component
 const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-      <motion.div 
+    <motion.div 
     className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 ${className}`}
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -140,8 +141,8 @@ const Button: React.FC<{
       className={`${baseClasses} ${variantClasses} ${className}`}
       whileHover={{ scale: disabled ? 1 : 1.05, y: disabled ? 0 : -2 }}
       whileTap={{ scale: disabled ? 1 : 0.95 }}
-    >
-      {loading ? (
+            >
+              {loading ? (
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           Loading...
@@ -161,11 +162,11 @@ const PoolInfo: React.FC<{ pairData: any }> = ({ pairData }) => (
       <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
           {pairData?.reserveA?.toLocaleString() || '0.00'}
-        </div>
+          </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">FLOW</div>
         <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
           ${pairData?.priceA?.toFixed(4) || '0.0000'}
-        </div>
+          </div>
       </div>
       <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
         <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
@@ -197,12 +198,15 @@ const PoolInfo: React.FC<{ pairData: any }> = ({ pairData }) => (
 );
 
 // Swap Interface Component
-const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number) => void; flowBalance?: number }> = ({ onSwap, flowBalance = 0 }) => {
+const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number, direction: 'AtoB' | 'BtoA') => void; flowBalance?: number; usdcBalance?: number }> = ({ onSwap, flowBalance = 0, usdcBalance = 0 }) => {
   const [amountIn, setAmountIn] = useState('');
   const [slippage, setSlippage] = useState<number>(0.5);
   const [quote, setQuote] = useState<number>(0);
   const [loadingQuote, setLoadingQuote] = useState<boolean>(false);
   const [priceImpact, setPriceImpact] = useState<number>(0);
+  const [direction, setDirection] = useState<'AtoB' | 'BtoA'>('AtoB');
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     const run = async () => {
@@ -210,7 +214,7 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
       if (!amt || amt <= 0) { setQuote(0); return; }
       setLoadingQuote(true);
       try {
-        const q = await getQuote(amt, 'AtoB');
+        const q = await getQuote(amt, direction);
         const qNum = Number(q) || 0;
         setQuote(qNum);
         const minRecv = qNum * (1 - slippage/100);
@@ -219,19 +223,19 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
       } catch {
         setQuote(0);
         setPriceImpact(0);
-      } finally {
+    } finally {
         setLoadingQuote(false);
       }
     };
     run();
-  }, [amountIn]);
+  }, [amountIn, direction, slippage]);
 
   const minReceived = quote * (1 - slippage / 100);
 
   const handleSwap = () => {
     const amtIn = parseFloat(amountIn) || 0;
     const minOut = minReceived > 0 ? minReceived : 0;
-    onSwap(amtIn, minOut);
+    onSwap(amtIn, minOut, direction);
   };
 
   return (
@@ -241,16 +245,16 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
           <Input
           value={amountIn}
           onChange={setAmountIn}
-          placeholder="0.0"
+            placeholder="0.0"
             label="From"
-          token="FLOW"
+          token={direction === 'AtoB' ? 'FLOW' : 'USDC'}
         />
         <div className="flex justify-between items-center -mt-2">
-          <span className="text-xs text-gray-600 dark:text-gray-400">Balance: {flowBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} FLOW</span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Balance: {(direction === 'AtoB' ? flowBalance : usdcBalance).toLocaleString(undefined, { maximumFractionDigits: 6 })} {direction === 'AtoB' ? 'FLOW' : 'USDC'}</span>
           <button
-            type="button"
+              type="button"
             className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-            onClick={() => setAmountIn(String(flowBalance || 0))}
+            onClick={() => setAmountIn(String((direction === 'AtoB' ? flowBalance : usdcBalance) || 0))}
           >
             Max
           </button>
@@ -260,6 +264,11 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
             className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full"
             whileHover={{ rotate: 180 }}
             transition={{ duration: 0.3 }}
+            onClick={() => {
+              setDirection(direction === 'AtoB' ? 'BtoA' : 'AtoB');
+              // reset quote when toggling direction
+              setQuote(0);
+            }}
           >
             <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -272,22 +281,22 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
               <input
             type="number"
                 value={(loadingQuote ? 0 : quote).toFixed(6)}
-                readOnly
+            readOnly
             placeholder="0.0"
                 className="w-full px-4 py-3 pr-16 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">USDC</span>
-              </div>
+                <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">{direction === 'AtoB' ? 'USDC' : 'FLOW'}</span>
+        </div>
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400">
-              Min received ({slippage.toFixed(1)}%): <span className="font-semibold">{minReceived > 0 ? minReceived.toFixed(6) : '0.000000'} USDC</span>
+              Min received ({slippage.toFixed(1)}%): <span className="font-semibold">{minReceived > 0 ? minReceived.toFixed(6) : '0.000000'} {direction === 'AtoB' ? 'USDC' : 'FLOW'}</span>
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400">
               Price impact: <span className={`font-semibold ${priceImpact > 5 ? 'text-red-500' : ''}`}>{priceImpact.toFixed(2)}%</span>
         </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Route: FLOW → USDC
+              Route: {direction === 'AtoB' ? 'FLOW → USDC' : 'USDC → FLOW'}
             </div>
           </div>
         
@@ -301,11 +310,78 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number)
             onChange={(e) => setSlippage(parseFloat(e.target.value) || 0)}
             className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
+          <div className="flex gap-2 mt-1">
+            {[0.1, 0.5, 1, 2].map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setSlippage(p)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                  slippage === p
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {p}%
+              </button>
+            ))}
           </div>
-        <Button onClick={handleSwap} className="w-full">
-          Swap Tokens
-        </Button>
         </div>
+        <Button onClick={() => setShowConfirm(true)} className="w-full">
+          Swap Tokens
+          </Button>
+        </div>
+        <AnimatePresence>
+          {showConfirm && (
+        <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+                <motion.div
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md p-6"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+              >
+                <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Confirm Swap</h4>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Direction</span><span className="font-semibold text-gray-800 dark:text-gray-200">{direction === 'AtoB' ? 'FLOW → USDC' : 'USDC → FLOW'}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Amount in</span><span className="font-semibold text-gray-800 dark:text-gray-200">{(parseFloat(amountIn) || 0).toFixed(6)} {direction === 'AtoB' ? 'FLOW' : 'USDC'}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Quote</span><span className="font-semibold text-gray-800 dark:text-gray-200">{quote.toFixed(6)} {direction === 'AtoB' ? 'USDC' : 'FLOW'}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Min received</span><span className="font-semibold text-gray-800 dark:text-gray-200">{minReceived > 0 ? minReceived.toFixed(6) : '0.000000'} {direction === 'AtoB' ? 'USDC' : 'FLOW'}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Slippage</span><span className="font-semibold text-gray-800 dark:text-gray-200">{slippage.toFixed(1)}%</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Price impact</span><span className={`font-semibold ${priceImpact > 5 ? 'text-red-500' : 'text-gray-800 dark:text-gray-200'}`}>{priceImpact.toFixed(2)}%</span></div>
+                </div>
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <button 
+                    disabled={isSubmitting}
+                    onClick={() => setShowConfirm(false)}
+                    className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    disabled={isSubmitting}
+                    onClick={async () => {
+                      setIsSubmitting(true);
+                      try {
+                        await (async () => { handleSwap(); })();
+                        setShowConfirm(false);
+    } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Submitting…' : 'Confirm Swap'}
+                  </button>
+                </div>
+          </motion.div>
+          </motion.div>
+            )}
+        </AnimatePresence>
     </Card>
   );
 };
@@ -338,11 +414,11 @@ const LiquidityInterface: React.FC<{ onLiquidity: (amountA: number, amountB: num
                   placeholder="0.0"
           label="USDC Amount"
           token="USDC"
-        />
+                />
         <Button onClick={handleLiquidity} className="w-full">
           Add Liquidity
             </Button>
-      </div>
+              </div>
     </Card>
   );
 };
@@ -374,7 +450,7 @@ const RemoveLiquidityInterface: React.FC<{ onRemove: (percent: number) => void }
         </div>
         <Button onClick={handleRemove} className="w-full">
           Remove Liquidity
-        </Button>
+            </Button>
       </div>
     </Card>
   );
@@ -402,8 +478,8 @@ const Faucet: React.FC<{ onMint: (token: 'FLOW' | 'USDC') => void }> = ({ onMint
       >
         Mint 1000 USDC
       </Button>
-    </div>
-  </Card>
+        </div>
+      </Card>
 );
 
 // User Balances Component
@@ -433,8 +509,8 @@ const UserBalances: React.FC<{ balances: any }> = ({ balances }) => (
           {balances?.usdc || '0.00'}
         </span>
       </div>
-    </div>
-  </Card>
+      </div>
+    </Card>
 );
 
 // Floating Elements Component
@@ -468,16 +544,36 @@ const App: React.FC = () => {
   const { balances } = useBalances();
   const [activeTab, setActiveTab] = useState<'swap' | 'liquidity' | 'remove'>('swap');
 
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string; txId?: string } | null>(null);
+  type RecentActivity = {
+    id: string;
+    time: number;
+    direction: 'AtoB' | 'BtoA';
+    amountIn: number;
+    minAmountOut: number;
+    status: 'submitted' | 'error';
+    txId?: string;
+  };
+  const [recent, setRecent] = useState<RecentActivity[]>([]);
 
-  const handleSwap = async (amountA: number, amountB: number) => {
+  const handleSwap = async (amountA: number, amountB: number, direction: 'AtoB' | 'BtoA') => {
     try {
-      console.log('Swapping A→B:', { amountIn: amountA, minAmountOut: amountB });
-      const txId = await swapAForB(amountA, amountB);
-      setToast({ type: 'success', message: `Swap submitted: ${String(txId).slice(0, 8)}...` });
+      console.log(`Swapping ${direction}:`, { amountIn: amountA, minAmountOut: amountB });
+      const txId = direction === 'AtoB' 
+        ? await swapAForB(amountA, amountB)
+        : await swapBForA(amountA, amountB);
+      setToast({ type: 'success', message: `Swap submitted`, txId: String(txId) });
+      setRecent((prev: RecentActivity[]): RecentActivity[] => [
+        ({ id: String(txId), time: Date.now(), direction, amountIn: amountA, minAmountOut: amountB, status: 'submitted', txId: String(txId) } as RecentActivity),
+        ...prev
+      ].slice(0, 8));
     } catch (error) {
       console.error('Swap failed:', error);
       setToast({ type: 'error', message: 'Swap failed' });
+      setRecent((prev: RecentActivity[]): RecentActivity[] => [
+        ({ id: Math.random().toString(36).slice(2), time: Date.now(), direction, amountIn: amountA, minAmountOut: amountB, status: 'error' } as RecentActivity),
+        ...prev
+      ].slice(0, 8));
     }
   };
 
@@ -535,8 +631,8 @@ const App: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                <Logo size={32} />
               </div>
                      <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">FlowSwap</h1>
           </motion.div>
@@ -546,15 +642,26 @@ const App: React.FC = () => {
             <Connect />
           </div>
           </div>
-        </div>
-      </motion.header>
+          </div>
+        </motion.header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {toast && (
           <div className={`fixed right-4 top-20 z-50 px-4 py-3 rounded-xl shadow-lg ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
-               onAnimationEnd={() => setTimeout(() => setToast(null), 3000)}>
-            {toast.message}
+               onAnimationEnd={() => setTimeout(() => setToast(null), 4000)}>
+            <div className="flex items-center gap-3">
+              <span>{toast.message}</span>
+              {toast.type === 'success' && toast.txId && (
+                <a
+                  className="underline font-semibold"
+                  href={`https://testnet.flowscan.org/transaction/${toast.txId}`}
+                  target="_blank" rel="noreferrer"
+                >
+                  View tx
+                </a>
+              )}
+          </div>
           </div>
         )}
         <motion.div 
@@ -577,11 +684,40 @@ const App: React.FC = () => {
                   <PoolInfo pairData={pairData} />
                   <Faucet onMint={handleMint} />
                   <UserBalances balances={balances} />
+                  <Card>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Recent Activity</h3>
+                    {recent.length === 0 ? (
+                      <div className="text-sm text-gray-500 dark:text-gray-400">No recent swaps yet.</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {recent.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                            <div className="text-sm text-gray-700 dark:text-gray-200">
+                              <div className="font-semibold">{r.direction === 'AtoB' ? 'FLOW → USDC' : 'USDC → FLOW'}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{r.amountIn.toFixed(4)} in • min {r.minAmountOut.toFixed(4)} out</div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`text-xs font-medium ${r.status === 'submitted' ? 'text-green-500' : 'text-red-500'}`}>{r.status}</span>
+                              {r.txId && (
+                                <a
+                                  href={`https://testnet.flowscan.org/transaction/${r.txId}`}
+                                  target="_blank" rel="noreferrer"
+                                  className="text-xs underline text-blue-600 dark:text-blue-400"
+                                >
+                                  View
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
                 </div>
 
           {/* Right Column - Trading Interface */}
           <div className="lg:col-span-2">
-            <motion.div
+          <motion.div
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -632,8 +768,12 @@ const App: React.FC = () => {
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <SwapInterface onSwap={handleSwap} flowBalance={Number((balances?.flow || '0').toString().replace(/,/g, ''))} />
-                    </motion.div>
+                      <SwapInterface 
+                        onSwap={handleSwap} 
+                        flowBalance={Number((balances?.flow || '0').toString().replace(/,/g, ''))}
+                        usdcBalance={Number((balances?.usdc || '0').toString().replace(/,/g, ''))}
+                      />
+          </motion.div>
                   ) : activeTab === 'liquidity' ? (
                     <motion.div
                       key="liquidity"
@@ -643,7 +783,7 @@ const App: React.FC = () => {
                       transition={{ duration: 0.3 }}
                     >
                       <LiquidityInterface onLiquidity={handleLiquidity} />
-                    </motion.div>
+        </motion.div>
                   ) : (
                     <motion.div
                       key="remove"
@@ -656,9 +796,9 @@ const App: React.FC = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+      </div>
             </motion.div>
-          </div>
+    </div>
       </div>
       </main>
     </div>
