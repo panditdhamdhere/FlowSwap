@@ -545,6 +545,11 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'swap' | 'liquidity' | 'remove'>('swap');
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string; txId?: string } | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
   type RecentActivity = {
     id: string;
     time: number;
@@ -648,7 +653,7 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {toast && (
-          <div className={`fixed right-4 top-20 z-50 px-4 py-3 rounded-xl shadow-lg ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+          <div className={`fixed right-4 bottom-4 z-50 px-4 py-3 rounded-xl shadow-lg ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                onAnimationEnd={() => setTimeout(() => setToast(null), 4000)}>
             <div className="flex items-center gap-3">
               <span>{toast.message}</span>
