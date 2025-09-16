@@ -7,10 +7,12 @@
 :root {
   --shadow: rgba(0, 0, 0, 0.1);
   --shadow-lg: rgba(0, 0, 0, 0.15);
-  /* Flow official colors */
-  --flow-primary: #00D4FF;
-  --flow-secondary: #6C5CE7;
-  --flow-dark: #2D3748;
+  /* Parrot-inspired colors */
+  --parrot-green: #10B981;
+  --parrot-blue: #3B82F6;
+  --parrot-yellow: #F59E0B;
+  --parrot-red: #EF4444;
+  --parrot-purple: #8B5CF6;
 }
 
 .dark {
@@ -50,13 +52,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--flow-primary);
+  background: var(--parrot-blue);
   border-radius: 4px;
   transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--flow-secondary);
+  background: var(--parrot-purple);
 }
 
 /* Animations */
@@ -83,10 +85,10 @@ body {
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(0, 212, 255, 0.6);
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
   }
 }
 
@@ -297,14 +299,14 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--flow-primary) 0%, var(--flow-secondary) 100%);
+  background: linear-gradient(135deg, var(--parrot-green) 0%, var(--parrot-blue) 50%, var(--parrot-yellow) 100%);
   color: white;
-  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
 }
 
 .btn-secondary {
@@ -344,8 +346,8 @@ body {
 }
 
 .input:focus {
-  border-color: var(--flow-primary);
-  box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.1);
+  border-color: var(--parrot-green);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
   transform: translateY(-1px);
 }
 
@@ -410,17 +412,17 @@ body {
 /* Custom focus styles */
 .focus-ring:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.2);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
 }
 
 /* Text selection */
 ::selection {
-  background: var(--flow-primary);
+  background: var(--parrot-green);
   color: white;
 }
 
 ::-moz-selection {
-  background: var(--flow-primary);
+  background: var(--parrot-green);
   color: white;
 }
 

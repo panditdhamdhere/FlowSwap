@@ -17,12 +17,13 @@ export const Logo: React.FC<LogoProps> = ({ size = 32, className = '' }) => {
     >
       <defs>
         <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#00D4FF', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: '#6C5CE7', stopOpacity: 1 }} />
+          <stop offset="0%" style={{ stopColor: '#10B981', stopOpacity: 1 }} />
+          <stop offset="50%" style={{ stopColor: '#3B82F6', stopOpacity: 1 }} />
+          <stop offset="100%" style={{ stopColor: '#F59E0B', stopOpacity: 1 }} />
         </linearGradient>
         <linearGradient id="swapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#00D4FF', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: '#6C5CE7', stopOpacity: 1 }} />
+          <stop offset="0%" style={{ stopColor: '#EF4444', stopOpacity: 1 }} />
+          <stop offset="100%" style={{ stopColor: '#8B5CF6', stopOpacity: 1 }} />
         </linearGradient>
       </defs>
       

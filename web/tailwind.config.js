@@ -8,10 +8,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        flow: {
-          primary: '#00D4FF',
-          secondary: '#6C5CE7',
-          dark: '#2D3748',
+        parrot: {
+          green: '#10B981',
+          blue: '#3B82F6',
+          yellow: '#F59E0B',
+          red: '#EF4444',
+          purple: '#8B5CF6',
         },
         brand: {
           50: '#eff6ff',
