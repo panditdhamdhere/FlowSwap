@@ -27,7 +27,7 @@ const SWAP_A_TO_B_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
 
 transaction(amountIn: UFix64, minAmountOut: UFix64) {
-  execute {
+    execute {
     let out = FlowDEX.swapAForB(amountIn: amountIn, minAmountOut: minAmountOut)
     log(out)
   }
@@ -38,10 +38,10 @@ const SWAP_B_TO_A_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
 
 transaction(amountIn: UFix64, minAmountOut: UFix64) {
-  execute {
+    execute {
     let out = FlowDEX.swapBForA(amountIn: amountIn, minAmountOut: minAmountOut)
     log(out)
-  }
+    }
 }
 `
 
@@ -54,13 +54,16 @@ access(all) fun main(): [UFix64] {
 `
 
 export async function addLiquidity(amountA: number, amountB: number) {
-  return fcl.mutate({
+  const txId = await fcl.mutate({
     cadence: ADD_LIQUIDITY_TX,
     args: (arg, t) => [
       arg(amountA.toFixed(1), t.UFix64),
       arg(amountB.toFixed(1), t.UFix64)
-    ]
+    ],
+    limit: 9999
   })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
 export async function getReserves() {
@@ -170,7 +173,9 @@ transaction() {
 `
 
 export async function setupDemoTokenVaults() {
-  return fcl.mutate({ cadence: SETUP_VAULTS_TX })
+  const txId = await fcl.mutate({ cadence: SETUP_VAULTS_TX, limit: 9999 })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
 // ===== Faucet: Mint test tokens =====
@@ -203,17 +208,23 @@ transaction(amount: UFix64) {
 `
 
 export async function mintTestToken(amount: number = 1000) {
-  return fcl.mutate({
+  const txId = await fcl.mutate({
     cadence: MINT_TESTTOKEN_TX,
-    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)]
+    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
+    limit: 9999
   })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
 export async function mintTestToken2(amount: number = 1000) {
-  return fcl.mutate({
+  const txId = await fcl.mutate({
     cadence: MINT_TESTTOKEN2_TX,
-    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)]
+    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
+    limit: 9999
   })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
 const REMOVE_LIQ_TX = `
@@ -228,30 +239,39 @@ transaction(percent: UFix64) {
 `
 
 export async function removeLiquidityPercent(percent: number) {
-  return fcl.mutate({
+  const txId = await fcl.mutate({
     cadence: REMOVE_LIQ_TX,
-    args: (arg, t) => [arg(percent.toFixed(1), t.UFix64)]
+    args: (arg, t) => [arg(percent.toFixed(1), t.UFix64)],
+    limit: 9999
   })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
 export async function swapAForB(_amountIn: number, _minAmountOut: number = 0) {
-  return fcl.mutate({
+  const txId = await fcl.mutate({
     cadence: SWAP_A_TO_B_TX,
     args: (arg, t) => [
       arg(_amountIn.toFixed(1), t.UFix64),
       arg(_minAmountOut.toFixed(1), t.UFix64)
-    ]
+    ],
+    limit: 9999
   })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
 export async function swapBForA(_amountIn: number, _minAmountOut: number = 0) {
-  return fcl.mutate({
+  const txId = await fcl.mutate({
     cadence: SWAP_B_TO_A_TX,
     args: (arg, t) => [
       arg(_amountIn.toFixed(1), t.UFix64),
       arg(_minAmountOut.toFixed(1), t.UFix64)
-    ]
+    ],
+    limit: 9999
   })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
 export async function getPrices() {

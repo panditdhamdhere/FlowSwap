@@ -155,7 +155,7 @@ const Button: React.FC<{
 };
 
 // Pool Info Component
-const PoolInfo: React.FC<{ pairData: any }> = ({ pairData }) => (
+const PoolInfo: React.FC<{ pairData: any; onSeed?: () => void }> = ({ pairData, onSeed }) => (
   <Card className="mb-6">
     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Pool Information</h3>
     <div className="grid grid-cols-2 gap-4">
@@ -193,6 +193,16 @@ const PoolInfo: React.FC<{ pairData: any }> = ({ pairData }) => (
           </div>
         </div>
       </div>
+      {onSeed && (pairData?.reserveA === 0 || pairData?.reserveB === 0) && (
+        <div className="mt-4">
+          <button
+            onClick={onSeed}
+            className="w-full px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Seed demo liquidity (1000 FLOW / 1000 USDC)
+          </button>
+        </div>
+      )}
       </div>
     </Card>
 );
@@ -592,6 +602,14 @@ const App: React.FC = () => {
       setToast({ type: 'error', message: 'Add liquidity failed' });
     }
   };
+  const handleSeed = async () => {
+    try {
+      await addLiquidity(1000, 1000);
+      setToast({ type: 'success', message: 'Seeded 1000/1000 liquidity' });
+    } catch (e) {
+      setToast({ type: 'error', message: 'Seeding failed' });
+    }
+  };
 
   const handleMint = async (token: 'FLOW' | 'USDC') => {
     try {
@@ -686,7 +704,7 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column - Pool Info */}
                 <div className="lg:col-span-1">
-                  <PoolInfo pairData={pairData} />
+                  <PoolInfo pairData={pairData} onSeed={handleSeed} />
                   <Faucet onMint={handleMint} />
                   <UserBalances balances={balances} />
                   <Card>
