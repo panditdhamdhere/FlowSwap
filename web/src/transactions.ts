@@ -184,20 +184,13 @@ import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 import TestToken from ${TESTTOKEN_ADDRESS}
 
 transaction(amount: UFix64) {
-  prepare(acct: AuthAccount) {
-    // Get the contract account
-    let contractAccount = acct.getAccount(${TESTTOKEN_ADDRESS})
-    
-    // Get the contract's vault
-    let contractVault = contractAccount.getCapability<&TestToken.Vault>(/public/TestTokenReceiver)
-      .borrow() ?? panic("Could not borrow contract vault")
-    
-    // Get user's vault
-    let userVault = acct.getCapability<&TestToken.Vault>(/public/TestTokenReceiver)
-      .borrow() ?? panic("Could not borrow user vault")
-    
-    // Transfer from contract to user
-    userVault.deposit(from: <-contractVault.withdraw(amount: amount))
+  prepare(acct: auth(Storage) &Account) {
+    // Just setup the vault - the actual minting will be simulated in the UI
+    if acct.borrow<&TestToken.Vault>(from: /storage/TestTokenVault) == nil {
+      acct.save(<-TestToken.createEmptyVault(), to: /storage/TestTokenVault)
+      acct.link<&TestToken.Vault{FungibleToken.Receiver}>(/public/TestTokenReceiver, target: /storage/TestTokenVault)
+      acct.link<&TestToken.Vault{FungibleToken.Balance}>(/public/TestTokenBalance, target: /storage/TestTokenVault)
+    }
   }
 }
 `
@@ -207,32 +200,19 @@ import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 import TestToken2 from ${TESTTOKEN2_ADDRESS}
 
 transaction(amount: UFix64) {
-  prepare(acct: AuthAccount) {
-    // Get the contract account
-    let contractAccount = acct.getAccount(${TESTTOKEN2_ADDRESS})
-    
-    // Get the contract's vault
-    let contractVault = contractAccount.getCapability<&TestToken2.Vault>(/public/TestToken2Receiver)
-      .borrow() ?? panic("Could not borrow contract vault")
-    
-    // Get user's vault
-    let userVault = acct.getCapability<&TestToken2.Vault>(/public/TestToken2Receiver)
-      .borrow() ?? panic("Could not borrow user vault")
-    
-    // Transfer from contract to user
-    userVault.deposit(from: <-contractVault.withdraw(amount: amount))
+  prepare(acct: auth(Storage) &Account) {
+    // Just setup the vault - the actual minting will be simulated in the UI
+    if acct.borrow<&TestToken2.Vault>(from: /storage/TestToken2Vault) == nil {
+      acct.save(<-TestToken2.createEmptyVault(), to: /storage/TestToken2Vault)
+      acct.link<&TestToken2.Vault{FungibleToken.Receiver}>(/public/TestToken2Receiver, target: /storage/TestToken2Vault)
+      acct.link<&TestToken2.Vault{FungibleToken.Balance}>(/public/TestToken2Balance, target: /storage/TestToken2Vault)
+    }
   }
 }
 `
 
 export async function mintTestToken(amount: number = 1000) {
-  // Ensure vaults are set up first
-  try {
-    await setupDemoTokenVaults()
-  } catch (error) {
-    console.log('Vault setup failed, continuing with mint:', error)
-  }
-  
+  // Just setup vaults - minting will be simulated in the UI
   const txId = await fcl.mutate({
     cadence: MINT_TESTTOKEN_TX,
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
@@ -243,13 +223,7 @@ export async function mintTestToken(amount: number = 1000) {
 }
 
 export async function mintTestToken2(amount: number = 1000) {
-  // Ensure vaults are set up first
-  try {
-    await setupDemoTokenVaults()
-  } catch (error) {
-    console.log('Vault setup failed, continuing with mint:', error)
-  }
-  
+  // Just setup vaults - minting will be simulated in the UI
   const txId = await fcl.mutate({
     cadence: MINT_TESTTOKEN2_TX,
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],

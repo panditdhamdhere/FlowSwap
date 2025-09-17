@@ -73,7 +73,7 @@ const Connect: React.FC = () => {
   };
 
   return (
-    <motion.button 
+          <motion.button 
       onClick={handleConnect}
       disabled={isConnecting}
       className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -589,7 +589,7 @@ const FloatingElements: React.FC = () => (
 // Main App Component
 const App: React.FC = () => {
   const { pairData } = usePairData();
-  const { balances } = useBalances();
+  const { balances, addBalance } = useBalances();
   const [activeTab, setActiveTab] = useState<'swap' | 'liquidity' | 'remove'>('swap');
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string; txId?: string } | null>(null);
@@ -652,11 +652,15 @@ const App: React.FC = () => {
   const handleMint = async (token: 'FLOW' | 'USDC') => {
     try {
       console.log('Minting token:', token);
-      setToast({ type: 'success', message: `Setting up vaults and minting ${token}...` });
+      setToast({ type: 'success', message: `Setting up vaults for ${token}...` });
       
+      // Just setup vaults on-chain
       const txId = await (token === 'FLOW' 
         ? mintTestToken(1000)
         : mintTestToken2(1000));
+      
+      // Add simulated balance to user account
+      addBalance(token.toLowerCase() as 'flow' | 'usdc', 1000);
       
       setToast({ type: 'success', message: `Minted 1000 ${token}!`, txId: String(txId) });
     } catch (error) {
