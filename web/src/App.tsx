@@ -662,7 +662,13 @@ const App: React.FC = () => {
       // Add simulated balance to user account
       addBalance(token.toLowerCase() as 'flow' | 'usdc', 1000);
       
-      setToast({ type: 'success', message: `Minted 1000 ${token}!`, txId: String(txId) });
+      // Check if it's a mock transaction ID
+      const isMockTx = String(txId).startsWith('mock_')
+      setToast({ 
+        type: 'success', 
+        message: `Minted 1000 ${token}!${isMockTx ? ' (Demo Mode)' : ''}`, 
+        txId: isMockTx ? undefined : String(txId) 
+      });
     } catch (error) {
       console.error('Mint failed:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';

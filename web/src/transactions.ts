@@ -179,50 +179,26 @@ export async function setupDemoTokenVaults() {
 }
 
 // ===== Faucet: Mint test tokens =====
-const MINT_TESTTOKEN_TX = `
-import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
-import TestToken from ${TESTTOKEN_ADDRESS}
-
-transaction(amount: UFix64) {
-  prepare(acct: AuthAccount) {
-    // Simple transaction that just logs the amount - minting is simulated in UI
-    log("Minting TestToken amount: ".concat(amount.toString()))
-  }
-}
-`
-
-const MINT_TESTTOKEN2_TX = `
-import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
-import TestToken2 from ${TESTTOKEN2_ADDRESS}
-
-transaction(amount: UFix64) {
-  prepare(acct: AuthAccount) {
-    // Simple transaction that just logs the amount - minting is simulated in UI
-    log("Minting TestToken2 amount: ".concat(amount.toString()))
-  }
-}
-`
-
-export async function mintTestToken(amount: number = 1000) {
-  // Just setup vaults - minting will be simulated in the UI
-  const txId = await fcl.mutate({
-    cadence: MINT_TESTTOKEN_TX,
-    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
-    limit: 9999
-  })
-  await fcl.tx(txId).onceSealed()
-  return txId
+export async function mintTestToken(_amount: number = 1000) {
+  // Mock minting - simulate a successful transaction
+  // This works around testnet Cadence version issues
+  const mockTxId = "mock_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
+  
+  // Simulate transaction delay
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+  return mockTxId
 }
 
-export async function mintTestToken2(amount: number = 1000) {
-  // Just setup vaults - minting will be simulated in the UI
-  const txId = await fcl.mutate({
-    cadence: MINT_TESTTOKEN2_TX,
-    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
-    limit: 9999
-  })
-  await fcl.tx(txId).onceSealed()
-  return txId
+export async function mintTestToken2(_amount: number = 1000) {
+  // Mock minting - simulate a successful transaction
+  // This works around testnet Cadence version issues
+  const mockTxId = "mock_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
+  
+  // Simulate transaction delay
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+  return mockTxId
 }
 
 const REMOVE_LIQ_TX = `
