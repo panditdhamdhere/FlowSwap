@@ -652,13 +652,17 @@ const App: React.FC = () => {
   const handleMint = async (token: 'FLOW' | 'USDC') => {
     try {
       console.log('Minting token:', token);
-      await (token === 'FLOW' 
+      setToast({ type: 'success', message: `Setting up vaults and minting ${token}...` });
+      
+      const txId = await (token === 'FLOW' 
         ? mintTestToken(1000)
         : mintTestToken2(1000));
-      setToast({ type: 'success', message: `Minted 1000 ${token}!` });
+      
+      setToast({ type: 'success', message: `Minted 1000 ${token}!`, txId: String(txId) });
     } catch (error) {
       console.error('Mint failed:', error);
-      setToast({ type: 'error', message: `Mint ${token} failed` });
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setToast({ type: 'error', message: `Mint ${token} failed: ${errorMsg}` });
     }
   };
 

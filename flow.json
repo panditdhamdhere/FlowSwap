@@ -61,12 +61,18 @@
 	"deployments": {
 		"emulator": {
 			"emulator-account": [
-				"FlowDEX"
+				"FlowDEX",
+				"TestToken",
+				"TestToken2"
 			]
 		},
 		"testnet": {
 			"panditd": [
-				"FlowDEX"
+				"FlowDEX",
+				"TestToken"
+			],
+			"panditd2": [
+				"TestToken2"
 			]
 		}
 	}

@@ -208,6 +208,13 @@ transaction(amount: UFix64) {
 `
 
 export async function mintTestToken(amount: number = 1000) {
+  // Ensure vaults are set up first
+  try {
+    await setupDemoTokenVaults()
+  } catch (error) {
+    console.log('Vault setup failed, continuing with mint:', error)
+  }
+  
   const txId = await fcl.mutate({
     cadence: MINT_TESTTOKEN_TX,
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
@@ -218,6 +225,13 @@ export async function mintTestToken(amount: number = 1000) {
 }
 
 export async function mintTestToken2(amount: number = 1000) {
+  // Ensure vaults are set up first
+  try {
+    await setupDemoTokenVaults()
+  } catch (error) {
+    console.log('Vault setup failed, continuing with mint:', error)
+  }
+  
   const txId = await fcl.mutate({
     cadence: MINT_TESTTOKEN2_TX,
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
