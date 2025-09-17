@@ -184,11 +184,20 @@ import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 import TestToken from ${TESTTOKEN_ADDRESS}
 
 transaction(amount: UFix64) {
-  prepare(acct: auth(Storage) &Account) {
-    let minter = TestToken.createMinter()
-    let receiver = acct.getCapability<&{FungibleToken.Receiver}>(/public/TestTokenReceiver)
-      .borrow() ?? panic("Missing TestTokenReceiver capability")
-    minter.mint(amount: amount, recipient: receiver)
+  prepare(acct: AuthAccount) {
+    // Get the contract account
+    let contractAccount = acct.getAccount(${TESTTOKEN_ADDRESS})
+    
+    // Get the contract's vault
+    let contractVault = contractAccount.getCapability<&TestToken.Vault>(/public/TestTokenReceiver)
+      .borrow() ?? panic("Could not borrow contract vault")
+    
+    // Get user's vault
+    let userVault = acct.getCapability<&TestToken.Vault>(/public/TestTokenReceiver)
+      .borrow() ?? panic("Could not borrow user vault")
+    
+    // Transfer from contract to user
+    userVault.deposit(from: <-contractVault.withdraw(amount: amount))
   }
 }
 `
@@ -198,11 +207,20 @@ import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 import TestToken2 from ${TESTTOKEN2_ADDRESS}
 
 transaction(amount: UFix64) {
-  prepare(acct: auth(Storage) &Account) {
-    let minter = TestToken2.createMinter()
-    let receiver = acct.getCapability<&{FungibleToken.Receiver}>(/public/TestToken2Receiver)
-      .borrow() ?? panic("Missing TestToken2Receiver capability")
-    minter.mint(amount: amount, recipient: receiver)
+  prepare(acct: AuthAccount) {
+    // Get the contract account
+    let contractAccount = acct.getAccount(${TESTTOKEN2_ADDRESS})
+    
+    // Get the contract's vault
+    let contractVault = contractAccount.getCapability<&TestToken2.Vault>(/public/TestToken2Receiver)
+      .borrow() ?? panic("Could not borrow contract vault")
+    
+    // Get user's vault
+    let userVault = acct.getCapability<&TestToken2.Vault>(/public/TestToken2Receiver)
+      .borrow() ?? panic("Could not borrow user vault")
+    
+    // Transfer from contract to user
+    userVault.deposit(from: <-contractVault.withdraw(amount: amount))
   }
 }
 `
