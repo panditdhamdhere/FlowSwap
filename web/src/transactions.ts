@@ -184,13 +184,9 @@ import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 import TestToken from ${TESTTOKEN_ADDRESS}
 
 transaction(amount: UFix64) {
-  prepare(acct: auth(Storage) &Account) {
-    // Just setup the vault - the actual minting will be simulated in the UI
-    if acct.borrow<&TestToken.Vault>(from: /storage/TestTokenVault) == nil {
-      acct.save(<-TestToken.createEmptyVault(), to: /storage/TestTokenVault)
-      acct.link<&TestToken.Vault{FungibleToken.Receiver}>(/public/TestTokenReceiver, target: /storage/TestTokenVault)
-      acct.link<&TestToken.Vault{FungibleToken.Balance}>(/public/TestTokenBalance, target: /storage/TestTokenVault)
-    }
+  prepare(acct: AuthAccount) {
+    // Simple transaction that just logs the amount - minting is simulated in UI
+    log("Minting TestToken amount: ".concat(amount.toString()))
   }
 }
 `
@@ -200,13 +196,9 @@ import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 import TestToken2 from ${TESTTOKEN2_ADDRESS}
 
 transaction(amount: UFix64) {
-  prepare(acct: auth(Storage) &Account) {
-    // Just setup the vault - the actual minting will be simulated in the UI
-    if acct.borrow<&TestToken2.Vault>(from: /storage/TestToken2Vault) == nil {
-      acct.save(<-TestToken2.createEmptyVault(), to: /storage/TestToken2Vault)
-      acct.link<&TestToken2.Vault{FungibleToken.Receiver}>(/public/TestToken2Receiver, target: /storage/TestToken2Vault)
-      acct.link<&TestToken2.Vault{FungibleToken.Balance}>(/public/TestToken2Balance, target: /storage/TestToken2Vault)
-    }
+  prepare(acct: AuthAccount) {
+    // Simple transaction that just logs the amount - minting is simulated in UI
+    log("Minting TestToken2 amount: ".concat(amount.toString()))
   }
 }
 `
