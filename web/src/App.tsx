@@ -270,6 +270,14 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
 
   const handleSwap = () => {
     const amtIn = parseFloat(amountIn) || 0;
+    if (amtIn <= 0) return;
+    
+    // Check if there's liquidity in the pool
+    if (quote === 0) {
+      alert('No liquidity in the pool! Please add liquidity first or use the "Seed demo liquidity" button.');
+      return;
+    }
+    
     const minOut = minReceived > 0 ? minReceived : 0;
     onSwap(amtIn, minOut, direction);
   };
@@ -363,9 +371,13 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
             ))}
           </div>
         </div>
-        <Button onClick={() => setShowConfirm(true)} className="w-full">
-          Swap Tokens
-          </Button>
+        <Button 
+          onClick={() => setShowConfirm(true)} 
+          className="w-full"
+          disabled={quote === 0}
+        >
+          {quote === 0 ? 'No Liquidity' : 'Swap Tokens'}
+        </Button>
         </div>
         <AnimatePresence>
           {showConfirm && (
