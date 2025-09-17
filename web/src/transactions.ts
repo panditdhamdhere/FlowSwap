@@ -1,4 +1,19 @@
 import * as fcl from '@onflow/fcl'
+// Simple retry helper to survive transient testnet Access API failures (HTTP 503, Unavailable)
+async function retry<T>(fn: () => Promise<T>, attempts = 4, baseDelayMs = 700): Promise<T> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn()
+    } catch (e) {
+      lastErr = e
+      // Exponential backoff
+      const wait = baseDelayMs * Math.pow(1.7, i)
+      await new Promise((r) => setTimeout(r, wait))
+    }
+  }
+  throw lastErr
+}
 
 // Testnet contract addresses (deployed contracts)
 const FLOW_DEX_ADDRESS = "0x18f0d1d9cfa52c6d"
@@ -54,22 +69,22 @@ access(all) fun main(): [UFix64] {
 `
 
 export async function addLiquidity(amountA: number, amountB: number) {
-  const txId = await fcl.mutate({
+  const txId = await retry(() => fcl.mutate({
     cadence: ADD_LIQUIDITY_TX,
     args: (arg, t) => [
       arg(amountA.toFixed(1), t.UFix64),
       arg(amountB.toFixed(1), t.UFix64)
     ],
     limit: 9999
-  })
-  await fcl.tx(txId).onceSealed()
+  }))
+  await waitForSeal(txId)
   return txId
 }
 
 export async function getReserves() {
-  return fcl.query({
+  return retry(() => fcl.query({
     cadence: GET_RESERVES_SCRIPT
-  })
+  }))
 }
 
 // ===== Balances: public Balance cap scripts =====
@@ -98,17 +113,17 @@ access(all) fun main(addr: Address): UFix64 {
 `
 
 export async function getDemoFlowBalance(address: string) {
-  return fcl.query({
+  return retry(() => fcl.query({
     cadence: GET_DEMOFLOW_BAL,
     args: (arg, t) => [arg(address, t.Address)]
-  })
+  }))
 }
 
 export async function getDemoUSDCBalance(address: string) {
-  return fcl.query({
+  return retry(() => fcl.query({
     cadence: GET_DEMOUSDC_BAL,
     args: (arg, t) => [arg(address, t.Address)]
-  })
+  }))
 }
 
 // Transaction to ensure public Balance capabilities are linked for the signer
@@ -145,14 +160,14 @@ transaction() {
 `
 
 export async function ensureBalanceCaps() {
-  return fcl.mutate({ cadence: ENSURE_BALANCE_CAPS_TX })
+  return retry(() => fcl.mutate({ cadence: ENSURE_BALANCE_CAPS_TX }))
 }
 
 // Setup transaction to create user's vaults if missing and link receiver/balance
 const SETUP_VAULTS_TX = ENSURE_BALANCE_CAPS_TX
 
 export async function setupDemoTokenVaults() {
-  const txId = await fcl.mutate({ cadence: SETUP_VAULTS_TX, limit: 9999 })
+  const txId = await retry(() => fcl.mutate({ cadence: SETUP_VAULTS_TX, limit: 9999 }))
   await waitForSeal(txId)
   return txId
 }
@@ -184,22 +199,22 @@ transaction(amount: UFix64) {
 
 export async function mintTestToken(amount: number = 1000) {
   await setupDemoTokenVaults()
-  const txId = await fcl.mutate({
+  const txId = await retry(() => fcl.mutate({
     cadence: FAUCET_MINT_FLOW,
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
     limit: 9999
-  })
+  }))
   await waitForSeal(txId)
   return txId
 }
 
 export async function mintTestToken2(amount: number = 1000) {
   await setupDemoTokenVaults()
-  const txId = await fcl.mutate({
+  const txId = await retry(() => fcl.mutate({
     cadence: FAUCET_MINT_USDC,
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
     limit: 9999
-  })
+  }))
   await waitForSeal(txId)
   return txId
 }
@@ -216,37 +231,37 @@ transaction(percent: UFix64) {
 `
 
 export async function removeLiquidityPercent(percent: number) {
-  const txId = await fcl.mutate({
+  const txId = await retry(() => fcl.mutate({
     cadence: REMOVE_LIQ_TX,
     args: (arg, t) => [arg(percent.toFixed(1), t.UFix64)],
     limit: 9999
-  })
-  await fcl.tx(txId).onceSealed()
+  }))
+  await waitForSeal(txId)
   return txId
 }
 
 export async function swapAForB(_amountIn: number, _minAmountOut: number = 0) {
-  const txId = await fcl.mutate({
+  const txId = await retry(() => fcl.mutate({
     cadence: SWAP_A_TO_B_TX,
     args: (arg, t) => [
       arg(_amountIn.toFixed(1), t.UFix64),
       arg(_minAmountOut.toFixed(1), t.UFix64)
     ],
     limit: 9999
-  })
+  }))
   await waitForSeal(txId)
   return txId
 }
 
 export async function swapBForA(_amountIn: number, _minAmountOut: number = 0) {
-  const txId = await fcl.mutate({
+  const txId = await retry(() => fcl.mutate({
     cadence: SWAP_B_TO_A_TX,
     args: (arg, t) => [
       arg(_amountIn.toFixed(1), t.UFix64),
       arg(_minAmountOut.toFixed(1), t.UFix64)
     ],
     limit: 9999
-  })
+  }))
   await waitForSeal(txId)
   return txId
 }
