@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
-import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2, seedLiquidity } from './transactions';
+import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2, seedLiquidity, hasLiquidity } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
 import * as fcl from '@onflow/fcl';
@@ -189,9 +189,18 @@ const Button: React.FC<{
 };
 
 // Pool Info Component
-const PoolInfo: React.FC<{ pairData: any; onSeed?: () => void }> = ({ pairData, onSeed }) => (
+const PoolInfo: React.FC<{ pairData: any; onSeed?: () => void; hasLiquidity?: boolean }> = ({ pairData, onSeed, hasLiquidity }) => (
   <Card className="mb-6">
-    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Pool Information</h3>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Pool Information</h3>
+      <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+        hasLiquidity 
+          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      }`}>
+        {hasLiquidity ? '🟢 Active' : '🔴 No Liquidity'}
+          </div>
+          </div>
     <div className="grid grid-cols-2 gap-4">
       <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -599,6 +608,7 @@ const App: React.FC = () => {
   const { pairData, refetch: refetchPairData } = usePairData();
   const { balances, refetch: refetchBalances } = useBalances();
   const [activeTab, setActiveTab] = useState<'swap' | 'liquidity' | 'remove'>('swap');
+  const [dexHasLiquidity, setDexHasLiquidity] = useState(false);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string; txId?: string } | null>(null);
   useEffect(() => {
@@ -606,31 +616,61 @@ const App: React.FC = () => {
     const timer = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  // Check DEX liquidity status
+  useEffect(() => {
+    const checkLiquidity = async () => {
+      try {
+        const hasLiq = await hasLiquidity();
+        setDexHasLiquidity(hasLiq);
+      } catch (error) {
+        console.error('Error checking liquidity:', error);
+        setDexHasLiquidity(false);
+      }
+    };
+    
+    checkLiquidity();
+    // Check every 10 seconds
+    const interval = setInterval(checkLiquidity, 10000);
+    return () => clearInterval(interval);
+  }, []);
   type RecentActivity = {
     id: string;
     time: number;
     direction: 'AtoB' | 'BtoA';
     amountIn: number;
     minAmountOut: number;
-    status: 'submitted' | 'error';
+    status: 'submitted' | 'error' | 'completed';
     txId?: string;
   };
   const [recent, setRecent] = useState<RecentActivity[]>([]);
 
   const handleSwap = async (amountA: number, amountB: number, direction: 'AtoB' | 'BtoA') => {
     try {
+      // Check if DEX has liquidity before attempting swap
+      if (!dexHasLiquidity) {
+        setToast({ type: 'error', message: 'DEX has no liquidity. Please seed the pool first.' });
+        return;
+      }
+
       console.log(`Swapping ${direction}:`, { amountIn: amountA, minAmountOut: amountB });
       const txId = direction === 'AtoB' 
         ? await swapAForB(amountA, amountB)
         : await swapBForA(amountA, amountB);
-      setToast({ type: 'success', message: `Swap submitted`, txId: String(txId) });
+      setToast({ type: 'success', message: `Swap completed!`, txId: String(txId) });
+      
+      // Refresh balances and pair data after swap
+      refetchBalances();
+      refetchPairData();
+      
       setRecent((prev: RecentActivity[]): RecentActivity[] => [
-        ({ id: String(txId), time: Date.now(), direction, amountIn: amountA, minAmountOut: amountB, status: 'submitted', txId: String(txId) } as RecentActivity),
+        ({ id: String(txId), time: Date.now(), direction, amountIn: amountA, minAmountOut: amountB, status: 'completed', txId: String(txId) } as RecentActivity),
         ...prev
       ].slice(0, 8));
     } catch (error) {
       console.error('Swap failed:', error);
-      setToast({ type: 'error', message: 'Swap failed' });
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setToast({ type: 'error', message: `Swap failed: ${errorMsg}` });
       setRecent((prev: RecentActivity[]): RecentActivity[] => [
         ({ id: Math.random().toString(36).slice(2), time: Date.now(), direction, amountIn: amountA, minAmountOut: amountB, status: 'error' } as RecentActivity),
         ...prev
@@ -656,6 +696,8 @@ const App: React.FC = () => {
       // Refresh balances and pair data after seeding
       refetchBalances();
       refetchPairData();
+      // Update liquidity status
+      setDexHasLiquidity(true);
     } catch (e) {
       console.error('Seeding failed:', e);
       const errorMsg = e instanceof Error ? e.message : 'Unknown error';
@@ -775,7 +817,7 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column - Pool Info */}
                 <div className="lg:col-span-1">
-                  <PoolInfo pairData={pairData} onSeed={handleSeed} />
+                  <PoolInfo pairData={pairData} onSeed={handleSeed} hasLiquidity={dexHasLiquidity} />
                   <Faucet onMint={handleMint} />
                   <UserBalances balances={balances} />
                   <Card>

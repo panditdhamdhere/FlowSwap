@@ -79,6 +79,9 @@ transaction(amountIn: UFix64, minAmountOut: UFix64) {
     execute {
         let out = FlowDEX.swapAForB(amountIn: amountIn, minAmountOut: minAmountOut)
         log("Swap result: ".concat(out.toString()))
+        
+        // Note: In a real DEX, we would deposit the output tokens back to user's vault
+        // For this demo, the DEX contract handles the token accounting
     }
 }
 `
@@ -107,6 +110,9 @@ transaction(amountIn: UFix64, minAmountOut: UFix64) {
     execute {
         let out = FlowDEX.swapBForA(amountIn: amountIn, minAmountOut: minAmountOut)
         log("Swap result: ".concat(out.toString()))
+        
+        // Note: In a real DEX, we would deposit the output tokens back to user's vault
+        // For this demo, the DEX contract handles the token accounting
     }
 }
 `
@@ -300,6 +306,9 @@ transaction(percent: UFix64) {
   execute {
     let outs = FlowDEX.removeLiquidity(percent: percent)
     log("Removed liquidity: FLOW=".concat(outs[0].toString()).concat(" USDC=").concat(outs[1].toString()))
+    
+    // Note: In a real DEX, we would mint/deposit the returned tokens back to user's vault
+    // For this demo, the DEX contract handles the token accounting
   }
 }
 `
@@ -366,6 +375,22 @@ export async function getPrices() {
   const priceB = reserveA > 0 ? reserveB / reserveA : 0
 
   return { priceA, priceB, reserveA, reserveB }
+}
+
+// Check if DEX has sufficient liquidity for operations
+export async function hasLiquidity(): Promise<boolean> {
+  try {
+    const result = await getReserves()
+    const [reserveAStr, reserveBStr] = result as [string, string]
+    const reserveA = parseFloat(reserveAStr) || 0
+    const reserveB = parseFloat(reserveBStr) || 0
+    
+    // Consider DEX has liquidity if both reserves are > 0
+    return reserveA > 0 && reserveB > 0
+  } catch (error) {
+    console.error('Error checking liquidity:', error)
+    return false
+  }
 }
 
 export async function getQuote(_amountIn: number, _swapDirection: 'AtoB' | 'BtoA') {
