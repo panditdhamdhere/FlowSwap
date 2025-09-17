@@ -12,7 +12,7 @@ const testnet = {
   accessNode: 'https://rest-testnet.onflow.org',
   discovery: 'https://fcl-discovery.onflow.org/testnet/authn',
   wallet: 'https://fcl-discovery.onflow.org/testnet/authn',
-  discoveryInclude: [],
+  discoveryInclude: ['0x82ec283f88a62e65'], // Blocto wallet for faster connection
   network: 'testnet',
 }
 
@@ -44,6 +44,10 @@ export function initFCL(env: 'emulator' | 'testnet' = 'emulator') {
     .put('discovery.wallet', cfg.wallet)
     .put('discovery.authn.endpoint', cfg.discovery)
     .put('discovery.authn.include', cfg.discoveryInclude)
+    // Performance optimizations
+    .put('fcl.limit', 9999)
+    .put('fcl.gasLimit', 9999)
+    .put('fcl.storageLimit', 1000)
     // Contract addresses
     .put('0xFlowDEX', contracts.FlowDEX)
     .put('0xTestToken', contracts.TestToken)

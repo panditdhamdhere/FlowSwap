@@ -37,6 +37,7 @@ const ThemeToggle: React.FC = () => {
 // Connect Wallet Component
 const Connect: React.FC = () => {
   const [user, setUser] = useState<{ loggedIn: boolean; addr: string | null }>({ loggedIn: false, addr: null });
+  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     fcl.currentUser.subscribe((user: any) => {
@@ -48,21 +49,46 @@ const Connect: React.FC = () => {
   }, []);
 
   const handleConnect = async () => {
-    if (user.loggedIn) {
-      fcl.unauthenticate();
-    } else {
-      fcl.authenticate();
+    setIsConnecting(true);
+    try {
+      if (user.loggedIn) {
+        fcl.unauthenticate();
+      } else {
+        // Add timeout to prevent hanging
+        const authPromise = fcl.authenticate();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Connection timeout')), 30000)
+        );
+        await Promise.race([authPromise, timeoutPromise]);
+      }
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      // Show user-friendly error message
+      if (error instanceof Error && error.message === 'Connection timeout') {
+        alert('Wallet connection timed out. Please try again.');
+      }
+    } finally {
+      setIsConnecting(false);
     }
   };
 
   return (
-          <motion.button 
+    <motion.button 
       onClick={handleConnect}
-      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-      whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
+      disabled={isConnecting}
+      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+      whileHover={{ scale: isConnecting ? 1 : 1.05, y: isConnecting ? 0 : -2 }}
+      whileTap={{ scale: isConnecting ? 1 : 0.95 }}
     >
-      {user.loggedIn ? (
+      {isConnecting ? (
+        <div className="flex items-center gap-2">
+          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Connecting...
+        </div>
+      ) : user.loggedIn ? (
         <span className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-400 rounded-full"></div>
           {user.addr ? `${user.addr.slice(0, 6)}...${user.addr.slice(-4)}` : 'Connected'}
