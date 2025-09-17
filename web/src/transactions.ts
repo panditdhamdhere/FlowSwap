@@ -185,7 +185,7 @@ import TestToken from ${TESTTOKEN_ADDRESS}
 
 transaction(amount: UFix64) {
   prepare(acct: auth(Storage) &Account) {
-    let minter = TestToken.getAdmin().createMinter()
+    let minter = TestToken.createMinter()
     let receiver = acct.getCapability<&{FungibleToken.Receiver}>(/public/TestTokenReceiver)
       .borrow() ?? panic("Missing TestTokenReceiver capability")
     minter.mint(amount: amount, recipient: receiver)
@@ -199,7 +199,7 @@ import TestToken2 from ${TESTTOKEN2_ADDRESS}
 
 transaction(amount: UFix64) {
   prepare(acct: auth(Storage) &Account) {
-    let minter = TestToken2.getAdmin().createMinter()
+    let minter = TestToken2.createMinter()
     let receiver = acct.getCapability<&{FungibleToken.Receiver}>(/public/TestToken2Receiver)
       .borrow() ?? panic("Missing TestToken2Receiver capability")
     minter.mint(amount: amount, recipient: receiver)
