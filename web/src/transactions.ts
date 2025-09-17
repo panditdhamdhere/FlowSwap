@@ -159,8 +159,8 @@ const GET_DEMOFLOW_BAL = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
-  let cap = getAccount(addr)
-    .getCapability<&{FungibleToken.Balance}>(/public/DemoFLOWBalance)
+  let account = getAccount(addr)
+  let cap = account.getCapability<&{FungibleToken.Balance}>(/public/DemoFLOWBalance)
   if !cap.check() { return 0.0 }
   let ref = cap.borrow() ?? panic("Missing DemoFLOWBalance capability")
   return ref.balance
@@ -171,8 +171,8 @@ const GET_DEMOUSDC_BAL = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
-  let cap = getAccount(addr)
-    .getCapability<&{FungibleToken.Balance}>(/public/DemoUSDCBalance)
+  let account = getAccount(addr)
+  let cap = account.getCapability<&{FungibleToken.Balance}>(/public/DemoUSDCBalance)
   if !cap.check() { return 0.0 }
   let ref = cap.borrow() ?? panic("Missing DemoUSDCBalance capability")
   return ref.balance
