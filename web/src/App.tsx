@@ -6,6 +6,7 @@ import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, m
 import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
 import * as fcl from '@onflow/fcl';
+import { useAppStore } from './store';
 
 // Theme Toggle Component
 const ThemeToggle: React.FC = () => {
@@ -38,6 +39,7 @@ const ThemeToggle: React.FC = () => {
 const Connect: React.FC = () => {
   const [user, setUser] = useState<{ loggedIn: boolean; addr: string | null }>({ loggedIn: false, addr: null });
   const [isConnecting, setIsConnecting] = useState(false);
+  const setUserAddress = useAppStore((s) => s.setUserAddress);
 
   useEffect(() => {
     fcl.currentUser.subscribe((user: any) => {
@@ -45,6 +47,8 @@ const Connect: React.FC = () => {
         loggedIn: user.loggedIn || false,
         addr: user.addr || null
       });
+      // Keep global store in sync for balances and other hooks
+      setUserAddress(user.addr || null);
     });
   }, []);
 
@@ -53,6 +57,7 @@ const Connect: React.FC = () => {
     try {
       if (user.loggedIn) {
         fcl.unauthenticate();
+        setUserAddress(null);
       } else {
         // Add timeout to prevent hanging
         const authPromise = fcl.authenticate();
@@ -60,6 +65,9 @@ const Connect: React.FC = () => {
           setTimeout(() => reject(new Error('Connection timeout')), 30000)
         );
         await Promise.race([authPromise, timeoutPromise]);
+        // After successful auth, fetch current user and update store
+        const current = await fcl.currentUser.snapshot();
+        setUserAddress(current?.addr || null);
       }
     } catch (error) {
       console.error('Wallet connection error:', error);
@@ -659,8 +667,12 @@ const App: React.FC = () => {
         ? mintTestToken(1000)
         : mintTestToken2(1000));
       
-      // Add simulated balance to user account
-      addBalance(token.toLowerCase() as 'flow' | 'usdc', 1000);
+      console.log('Transaction completed, adding balance...');
+      
+      // Refresh on-chain balances
+      await addBalance();
+      
+      console.log('Balance added, showing success message...');
       
       // Check if it's a mock transaction ID
       const isMockTx = String(txId).startsWith('mock_')

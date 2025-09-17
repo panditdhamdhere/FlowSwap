@@ -2,9 +2,9 @@ import * as fcl from '@onflow/fcl'
 
 // Testnet contract addresses (deployed contracts)
 const FLOW_DEX_ADDRESS = "0x18f0d1d9cfa52c6d"
-// Token contracts on testnet (our demo tokens acting as FLOW/USDC)
-const TESTTOKEN_ADDRESS = "0x18f0d1d9cfa52c6d"   // TestToken (FLOW demo)
-const TESTTOKEN2_ADDRESS = "0x0ea4b4ea56a1260c"  // TestToken2 (USDC demo)
+// Demo tokens with on-chain faucet
+const DEMO_FLOW_ADDRESS = "0x18f0d1d9cfa52c6d"   // DemoFLOW deployed on panditd
+const DEMO_USDC_ADDRESS = "0x0ea4b4ea56a1260c"   // DemoUSDC deployed on panditd2
 const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
 
 const ADD_LIQUIDITY_TX = `
@@ -73,42 +73,40 @@ export async function getReserves() {
 }
 
 // ===== Balances: public Balance cap scripts =====
-const GET_TESTTOKEN_BAL = `
+const GET_DEMOFLOW_BAL = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
-import TestToken from ${TESTTOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
   let cap = getAccount(addr)
-    .getCapability<&{FungibleToken.Balance}>(/public/TestTokenBalance)
+    .getCapability<&{FungibleToken.Balance}>(/public/DemoFLOWBalance)
   if !cap.check() { return 0.0 }
-  let ref = cap.borrow() ?? panic("Missing TestTokenBalance capability")
+  let ref = cap.borrow() ?? panic("Missing DemoFLOWBalance capability")
   return ref.balance
 }
 `
 
-const GET_TESTTOKEN2_BAL = `
+const GET_DEMOUSDC_BAL = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
-import TestToken2 from ${TESTTOKEN2_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
   let cap = getAccount(addr)
-    .getCapability<&{FungibleToken.Balance}>(/public/TestToken2Balance)
+    .getCapability<&{FungibleToken.Balance}>(/public/DemoUSDCBalance)
   if !cap.check() { return 0.0 }
-  let ref = cap.borrow() ?? panic("Missing TestToken2Balance capability")
+  let ref = cap.borrow() ?? panic("Missing DemoUSDCBalance capability")
   return ref.balance
 }
 `
 
-export async function getTestTokenBalance(address: string) {
+export async function getDemoFlowBalance(address: string) {
   return fcl.query({
-    cadence: GET_TESTTOKEN_BAL,
+    cadence: GET_DEMOFLOW_BAL,
     args: (arg, t) => [arg(address, t.Address)]
   })
 }
 
-export async function getTestToken2Balance(address: string) {
+export async function getDemoUSDCBalance(address: string) {
   return fcl.query({
-    cadence: GET_TESTTOKEN2_BAL,
+    cadence: GET_DEMOUSDC_BAL,
     args: (arg, t) => [arg(address, t.Address)]
   })
 }
@@ -116,20 +114,31 @@ export async function getTestToken2Balance(address: string) {
 // Transaction to ensure public Balance capabilities are linked for the signer
 const ENSURE_BALANCE_CAPS_TX = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
-import TestToken from ${TESTTOKEN_ADDRESS}
-import TestToken2 from ${TESTTOKEN2_ADDRESS}
+import DemoFLOW from ${DEMO_FLOW_ADDRESS}
+import DemoUSDC from ${DEMO_USDC_ADDRESS}
 
 transaction() {
-  prepare(acct: auth(Storage, Capabilities) &Account) {
-    // TestToken balance cap
-    let hasCap1 = acct.getCapability<&{FungibleToken.Balance}>(/public/TestTokenBalance).check()
-    if (!hasCap1) {
-      acct.link<&{FungibleToken.Balance}>(/public/TestTokenBalance, target: /storage/TestTokenVault)
+  prepare(acct: AuthAccount) {
+    // DemoFLOW
+    if acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault) == nil {
+      acct.save(<-DemoFLOW.createEmptyVault(), to: /storage/DemoFLOWVault)
     }
-    // TestToken2 balance cap
-    let hasCap2 = acct.getCapability<&{FungibleToken.Balance}>(/public/TestToken2Balance).check()
-    if (!hasCap2) {
-      acct.link<&{FungibleToken.Balance}>(/public/TestToken2Balance, target: /storage/TestToken2Vault)
+    if !acct.getCapability<&{FungibleToken.Receiver}>(/public/DemoFLOWReceiver).check() {
+      acct.link<&{FungibleToken.Receiver}>(/public/DemoFLOWReceiver, target: /storage/DemoFLOWVault)
+    }
+    if !acct.getCapability<&{FungibleToken.Balance}>(/public/DemoFLOWBalance).check() {
+      acct.link<&{FungibleToken.Balance}>(/public/DemoFLOWBalance, target: /storage/DemoFLOWVault)
+    }
+
+    // DemoUSDC
+    if acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault) == nil {
+      acct.save(<-DemoUSDC.createEmptyVault(), to: /storage/DemoUSDCVault)
+    }
+    if !acct.getCapability<&{FungibleToken.Receiver}>(/public/DemoUSDCReceiver).check() {
+      acct.link<&{FungibleToken.Receiver}>(/public/DemoUSDCReceiver, target: /storage/DemoUSDCVault)
+    }
+    if !acct.getCapability<&{FungibleToken.Balance}>(/public/DemoUSDCBalance).check() {
+      acct.link<&{FungibleToken.Balance}>(/public/DemoUSDCBalance, target: /storage/DemoUSDCVault)
     }
   }
 }
@@ -140,37 +149,7 @@ export async function ensureBalanceCaps() {
 }
 
 // Setup transaction to create user's vaults if missing and link receiver/balance
-const SETUP_VAULTS_TX = `
-import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
-import TestToken from ${TESTTOKEN_ADDRESS}
-import TestToken2 from ${TESTTOKEN2_ADDRESS}
-
-transaction() {
-  prepare(acct: auth(Storage, Capabilities) &Account) {
-    // TestToken vault
-    if acct.borrow<&TestToken.Vault>(from: /storage/TestTokenVault) == nil {
-      acct.save(<-TestToken.createEmptyVault(), to: /storage/TestTokenVault)
-    }
-    if !acct.getCapability<&{FungibleToken.Receiver}>(/public/TestTokenReceiver).check() {
-      acct.link<&{FungibleToken.Receiver}>(/public/TestTokenReceiver, target: /storage/TestTokenVault)
-    }
-    if !acct.getCapability<&{FungibleToken.Balance}>(/public/TestTokenBalance).check() {
-      acct.link<&{FungibleToken.Balance}>(/public/TestTokenBalance, target: /storage/TestTokenVault)
-    }
-
-    // TestToken2 vault
-    if acct.borrow<&TestToken2.Vault>(from: /storage/TestToken2Vault) == nil {
-      acct.save(<-TestToken2.createEmptyVault(), to: /storage/TestToken2Vault)
-    }
-    if !acct.getCapability<&{FungibleToken.Receiver}>(/public/TestToken2Receiver).check() {
-      acct.link<&{FungibleToken.Receiver}>(/public/TestToken2Receiver, target: /storage/TestToken2Vault)
-    }
-    if !acct.getCapability<&{FungibleToken.Balance}>(/public/TestToken2Balance).check() {
-      acct.link<&{FungibleToken.Balance}>(/public/TestToken2Balance, target: /storage/TestToken2Vault)
-    }
-  }
-}
-`
+const SETUP_VAULTS_TX = ENSURE_BALANCE_CAPS_TX
 
 export async function setupDemoTokenVaults() {
   const txId = await fcl.mutate({ cadence: SETUP_VAULTS_TX, limit: 9999 })
@@ -179,26 +158,50 @@ export async function setupDemoTokenVaults() {
 }
 
 // ===== Faucet: Mint test tokens =====
-export async function mintTestToken(_amount: number = 1000) {
-  // Mock minting - simulate a successful transaction
-  // This works around testnet Cadence version issues
-  const mockTxId = "mock_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
-  
-  // Simulate transaction delay
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  return mockTxId
+const FAUCET_MINT_FLOW = `
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import DemoFLOW from ${DEMO_FLOW_ADDRESS}
+
+transaction(amount: UFix64) {
+  prepare(acct: AuthAccount) {
+    let cap = acct.getCapability<&{FungibleToken.Receiver}>(/public/DemoFLOWReceiver)
+    DemoFLOW.faucetMint(to: cap, amount: amount)
+  }
+}
+`
+
+const FAUCET_MINT_USDC = `
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import DemoUSDC from ${DEMO_USDC_ADDRESS}
+
+transaction(amount: UFix64) {
+  prepare(acct: AuthAccount) {
+    let cap = acct.getCapability<&{FungibleToken.Receiver}>(/public/DemoUSDCReceiver)
+    DemoUSDC.faucetMint(to: cap, amount: amount)
+  }
+}
+`
+
+export async function mintTestToken(amount: number = 1000) {
+  await setupDemoTokenVaults()
+  const txId = await fcl.mutate({
+    cadence: FAUCET_MINT_FLOW,
+    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
+    limit: 9999
+  })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
-export async function mintTestToken2(_amount: number = 1000) {
-  // Mock minting - simulate a successful transaction
-  // This works around testnet Cadence version issues
-  const mockTxId = "mock_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
-  
-  // Simulate transaction delay
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  return mockTxId
+export async function mintTestToken2(amount: number = 1000) {
+  await setupDemoTokenVaults()
+  const txId = await fcl.mutate({
+    cadence: FAUCET_MINT_USDC,
+    args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
+    limit: 9999
+  })
+  await fcl.tx(txId).onceSealed()
+  return txId
 }
 
 const REMOVE_LIQ_TX = `
