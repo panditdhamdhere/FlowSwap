@@ -180,17 +180,31 @@ access(all) fun main(addr: Address): UFix64 {
 `
 
 export async function getDemoFlowBalance(address: string) {
-  return retry(() => fcl.query({
-    cadence: GET_DEMOFLOW_BAL,
-    args: (arg, t) => [arg(address, t.Address)]
-  }))
+  try {
+    const result = await retry(() => fcl.query({
+      cadence: GET_DEMOFLOW_BAL,
+      args: (arg, t) => [arg(address, t.Address)]
+    }))
+    console.log('DemoFLOW balance query result:', result)
+    return result
+  } catch (error) {
+    console.error('Error fetching DemoFLOW balance:', error)
+    return '0'
+  }
 }
 
 export async function getDemoUSDCBalance(address: string) {
-  return retry(() => fcl.query({
-    cadence: GET_DEMOUSDC_BAL,
-    args: (arg, t) => [arg(address, t.Address)]
-  }))
+  try {
+    const result = await retry(() => fcl.query({
+      cadence: GET_DEMOUSDC_BAL,
+      args: (arg, t) => [arg(address, t.Address)]
+    }))
+    console.log('DemoUSDC balance query result:', result)
+    return result
+  } catch (error) {
+    console.error('Error fetching DemoUSDC balance:', error)
+    return '0'
+  }
 }
 
 // Transaction to ensure public Balance capabilities are linked for the signer
@@ -234,8 +248,11 @@ export async function ensureBalanceCaps() {
 const SETUP_VAULTS_TX = ENSURE_BALANCE_CAPS_TX
 
 export async function setupDemoTokenVaults() {
+  console.log('Setting up demo token vaults...')
   const txId = await retry(() => fcl.mutate({ cadence: SETUP_VAULTS_TX, limit: 9999 }))
+  console.log('Vault setup transaction ID:', txId)
   await waitForSeal(txId)
+  console.log('Vault setup transaction sealed')
   return txId
 }
 
@@ -265,24 +282,32 @@ transaction(amount: UFix64) {
 `
 
 export async function mintTestToken(amount: number = 1000) {
+  console.log('Setting up DemoFLOW vaults...')
   await setupDemoTokenVaults()
+  console.log('Minting DemoFLOW tokens...')
   const txId = await retry(() => fcl.mutate({
     cadence: FAUCET_MINT_FLOW,
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
     limit: 9999
   }))
+  console.log('DemoFLOW mint transaction ID:', txId)
   await waitForSeal(txId)
+  console.log('DemoFLOW mint transaction sealed')
   return txId
 }
 
 export async function mintTestToken2(amount: number = 1000) {
+  console.log('Setting up DemoUSDC vaults...')
   await setupDemoTokenVaults()
+  console.log('Minting DemoUSDC tokens...')
   const txId = await retry(() => fcl.mutate({
     cadence: FAUCET_MINT_USDC,
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
     limit: 9999
   }))
+  console.log('DemoUSDC mint transaction ID:', txId)
   await waitForSeal(txId)
+  console.log('DemoUSDC mint transaction sealed')
   return txId
 }
 

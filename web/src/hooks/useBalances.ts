@@ -20,19 +20,50 @@ export function useBalances() {
     setLoading(true)
     setError(null)
     try {
-      await ensureBalanceCaps().catch(() => {})
+      console.log('Fetching balances for address:', userAddress)
+      
+      // Ensure vaults are set up
+      await ensureBalanceCaps().catch((err) => {
+        console.warn('Failed to ensure balance caps:', err)
+      })
+      
       let flowNum = 0
       let usdcNum = 0
-      for (let i = 0; i < 5; i++) {
-        const [flowBal, usdcBal] = await Promise.all([
-          getDemoFlowBalance(userAddress) as Promise<string>,
-          getDemoUSDCBalance(userAddress) as Promise<string>,
-        ])
-        flowNum = parseFloat(flowBal || '0') || 0
-        usdcNum = parseFloat(usdcBal || '0') || 0
-        if (flowNum > 0 || usdcNum > 0) break
-        await new Promise((r) => setTimeout(r, 800))
+      
+      for (let i = 0; i < 8; i++) {
+        try {
+          console.log(`Balance fetch attempt ${i + 1}/8`)
+          const [flowBal, usdcBal] = await Promise.all([
+            getDemoFlowBalance(userAddress) as Promise<string>,
+            getDemoUSDCBalance(userAddress) as Promise<string>,
+          ])
+          
+          console.log('Raw balance responses:', { flowBal, usdcBal })
+          
+          flowNum = parseFloat(flowBal || '0') || 0
+          usdcNum = parseFloat(usdcBal || '0') || 0
+          
+          console.log('Parsed balances:', { flowNum, usdcNum })
+          
+          if (flowNum > 0 || usdcNum > 0) {
+            console.log('Found non-zero balances, breaking loop')
+            break
+          }
+          
+          if (i < 7) {
+            console.log('No balances found, waiting 1 second...')
+            await new Promise((r) => setTimeout(r, 1000))
+          }
+        } catch (err) {
+          console.error(`Balance fetch attempt ${i + 1} failed:`, err)
+          if (i < 7) {
+            await new Promise((r) => setTimeout(r, 1000))
+          }
+        }
       }
+      
+      console.log('Final balances:', { flowNum, usdcNum })
+      
       setBalances({
         flow: flowNum.toLocaleString(undefined, { maximumFractionDigits: 6 }),
         usdc: usdcNum.toLocaleString(undefined, { maximumFractionDigits: 6 })

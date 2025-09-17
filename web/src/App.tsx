@@ -707,28 +707,32 @@ const App: React.FC = () => {
 
   const handleMint = async (token: 'FLOW' | 'USDC') => {
     try {
-      console.log('Minting token:', token);
+      console.log('Starting mint process for token:', token);
       setToast({ type: 'success', message: `Setting up vaults for ${token}...` });
       
-      // Just setup vaults on-chain
+      // Mint tokens on-chain
       const txId = await (token === 'FLOW' 
         ? mintTestToken(1000)
         : mintTestToken2(1000));
       
-      console.log('Transaction completed, adding balance...');
+      console.log('Mint transaction completed, waiting for chain propagation...');
+      setToast({ type: 'success', message: `Minted 1000 ${token}! Refreshing balances...` });
       
-      // Refresh on-chain balances
-      await new Promise((r) => setTimeout(r, 700));
+      // Wait longer for chain propagation and refresh balances multiple times
+      await new Promise((r) => setTimeout(r, 2000));
+      console.log('First balance refresh...');
       refetchBalances();
       
-      console.log('Balance added, showing success message...');
+      // Try refreshing again after another delay
+      await new Promise((r) => setTimeout(r, 2000));
+      console.log('Second balance refresh...');
+      refetchBalances();
       
-      // Check if it's a mock transaction ID
-      const isMockTx = String(txId).startsWith('mock_')
+      console.log('Mint process completed');
       setToast({ 
         type: 'success', 
-        message: `Minted 1000 ${token}!${isMockTx ? ' (Demo Mode)' : ''}`, 
-        txId: isMockTx ? undefined : String(txId) 
+        message: `Minted 1000 ${token}! Check your balances.`, 
+        txId: String(txId) 
       });
     } catch (error) {
       console.error('Mint failed:', error);
