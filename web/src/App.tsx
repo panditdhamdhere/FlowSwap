@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
-import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2 } from './transactions';
+import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2, seedLiquidity } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
 import * as fcl from '@onflow/fcl';
@@ -596,8 +596,8 @@ const FloatingElements: React.FC = () => (
 
 // Main App Component
 const App: React.FC = () => {
-  const { pairData } = usePairData();
-  const { balances, addBalance } = useBalances();
+  const { pairData, refetch: refetchPairData } = usePairData();
+  const { balances, refetch: refetchBalances } = useBalances();
   const [activeTab, setActiveTab] = useState<'swap' | 'liquidity' | 'remove'>('swap');
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string; txId?: string } | null>(null);
@@ -650,10 +650,16 @@ const App: React.FC = () => {
   };
   const handleSeed = async () => {
     try {
-      await addLiquidity(1000, 1000);
-      setToast({ type: 'success', message: 'Seeded 1000/1000 liquidity' });
+      setToast({ type: 'success', message: 'Seeding liquidity...' });
+      const txId = await seedLiquidity();
+      setToast({ type: 'success', message: 'Seeded 1000/1000 liquidity!', txId: String(txId) });
+      // Refresh balances and pair data after seeding
+      refetchBalances();
+      refetchPairData();
     } catch (e) {
-      setToast({ type: 'error', message: 'Seeding failed' });
+      console.error('Seeding failed:', e);
+      const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+      setToast({ type: 'error', message: `Seeding failed: ${errorMsg}` });
     }
   };
 
@@ -671,7 +677,7 @@ const App: React.FC = () => {
       
       // Refresh on-chain balances
       await new Promise((r) => setTimeout(r, 700));
-      await addBalance();
+      refetchBalances();
       
       console.log('Balance added, showing success message...');
       

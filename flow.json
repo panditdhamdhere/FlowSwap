@@ -32,6 +32,24 @@
 				"testnet": "0ea4b4ea56a1260c"
 			}
 		}
+		,
+
+		"DemoFLOW": {
+			"source": "./cadence/contracts/DemoFLOW.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f8d6e0586b0a20c7",
+				"testnet": "18f0d1d9cfa52c6d"
+			}
+		},
+		"DemoUSDC": {
+			"source": "./cadence/contracts/DemoUSDC.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f8d6e0586b0a20c7",
+				"testnet": "0ea4b4ea56a1260c"
+			}
+		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
@@ -69,10 +87,12 @@
 		"testnet": {
 			"panditd": [
 				"FlowDEX",
-				"TestToken"
+				"TestToken",
+				"DemoFLOW"
 			],
 			"panditd2": [
-				"TestToken2"
+				"TestToken2",
+				"DemoUSDC"
 			]
 		}
 	}

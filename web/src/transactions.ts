@@ -24,10 +24,27 @@ const FUNGIBLE_TOKEN_ADDRESS = "0x9a0766d93b6608b7"
 
 const ADD_LIQUIDITY_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import DemoFLOW from ${DEMO_FLOW_ADDRESS}
+import DemoUSDC from ${DEMO_USDC_ADDRESS}
 
 transaction(amountA: UFix64, amountB: UFix64) {
-    prepare(acct: &Account) {
-        log("Adding liquidity with amounts: A=".concat(amountA.toString()).concat(" B=").concat(amountB.toString()))
+    prepare(acct: AuthAccount) {
+        // Get vault references
+        let flowVault = acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault)
+            ?? panic("DemoFLOW vault not found")
+        let usdcVault = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault)
+            ?? panic("DemoUSDC vault not found")
+        
+        // Withdraw tokens from user's vaults
+        let flowTokens <- flowVault.withdraw(amount: amountA)
+        let usdcTokens <- usdcVault.withdraw(amount: amountB)
+        
+        // Destroy the withdrawn tokens (simulating transfer to DEX)
+        destroy flowTokens
+        destroy usdcTokens
+        
+        log("Transferred tokens to DEX: FLOW=".concat(amountA.toString()).concat(" USDC=").concat(amountB.toString()))
     }
 
     execute {
@@ -40,22 +57,56 @@ transaction(amountA: UFix64, amountB: UFix64) {
 
 const SWAP_A_TO_B_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import DemoFLOW from ${DEMO_FLOW_ADDRESS}
+import DemoUSDC from ${DEMO_USDC_ADDRESS}
 
 transaction(amountIn: UFix64, minAmountOut: UFix64) {
+    prepare(acct: AuthAccount) {
+        // Get vault references
+        let flowVault = acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault)
+            ?? panic("DemoFLOW vault not found")
+        let usdcVault = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault)
+            ?? panic("DemoUSDC vault not found")
+        
+        // Withdraw input tokens (FLOW)
+        let flowTokens <- flowVault.withdraw(amount: amountIn)
+        destroy flowTokens
+        
+        log("Swapping FLOW to USDC: amountIn=".concat(amountIn.toString()))
+    }
+
     execute {
-    let out = FlowDEX.swapAForB(amountIn: amountIn, minAmountOut: minAmountOut)
-    log(out)
-  }
+        let out = FlowDEX.swapAForB(amountIn: amountIn, minAmountOut: minAmountOut)
+        log("Swap result: ".concat(out.toString()))
+    }
 }
 `
 
 const SWAP_B_TO_A_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import DemoFLOW from ${DEMO_FLOW_ADDRESS}
+import DemoUSDC from ${DEMO_USDC_ADDRESS}
 
 transaction(amountIn: UFix64, minAmountOut: UFix64) {
+    prepare(acct: AuthAccount) {
+        // Get vault references
+        let flowVault = acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault)
+            ?? panic("DemoFLOW vault not found")
+        let usdcVault = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault)
+            ?? panic("DemoUSDC vault not found")
+        
+        // Withdraw input tokens (USDC)
+        let usdcTokens <- usdcVault.withdraw(amount: amountIn)
+        destroy usdcTokens
+        
+        log("Swapping USDC to FLOW: amountIn=".concat(amountIn.toString()))
+    }
+
     execute {
-    let out = FlowDEX.swapBForA(amountIn: amountIn, minAmountOut: minAmountOut)
-    log(out)
+        let out = FlowDEX.swapBForA(amountIn: amountIn, minAmountOut: minAmountOut)
+        log("Swap result: ".concat(out.toString()))
     }
 }
 `
@@ -79,6 +130,16 @@ export async function addLiquidity(amountA: number, amountB: number) {
   }))
   await waitForSeal(txId)
   return txId
+}
+
+// Seed initial liquidity to the DEX (for testing)
+export async function seedLiquidity() {
+  // First mint tokens if needed
+  await mintTestToken(10000)
+  await mintTestToken2(10000)
+  
+  // Add initial liquidity
+  return await addLiquidity(1000, 1000)
 }
 
 export async function getReserves() {
@@ -221,11 +282,24 @@ export async function mintTestToken2(amount: number = 1000) {
 
 const REMOVE_LIQ_TX = `
 import FlowDEX from ${FLOW_DEX_ADDRESS}
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+import DemoFLOW from ${DEMO_FLOW_ADDRESS}
+import DemoUSDC from ${DEMO_USDC_ADDRESS}
 
 transaction(percent: UFix64) {
+  prepare(acct: AuthAccount) {
+    // Get vault references
+    let flowVault = acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault)
+        ?? panic("DemoFLOW vault not found")
+    let usdcVault = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault)
+        ?? panic("DemoUSDC vault not found")
+    
+    log("Removing liquidity: percent=".concat(percent.toString()))
+  }
+
   execute {
     let outs = FlowDEX.removeLiquidity(percent: percent)
-    log(outs)
+    log("Removed liquidity: FLOW=".concat(outs[0].toString()).concat(" USDC=").concat(outs[1].toString()))
   }
 }
 `
