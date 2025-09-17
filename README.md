@@ -1,6 +1,28 @@
 # FlowSwap - Decentralized Exchange on Flow Blockchain
 
-A production-ready decentralized exchange (DEX) built on the Flow blockchain using Cadence smart contracts and React frontend.
+A production-ready decentralized exchange (DEX) **built on Flow** using Cadence smart contracts and React frontend.
+
+## 🚀 Built on Flow
+
+This project is built on the **Flow blockchain** and utilizes:
+- **Cadence** smart contracts for on-chain logic
+- **Flow Client Library (FCL)** for blockchain interaction
+- **Flow testnet** for deployment and testing
+- **Flow-compatible wallets** for user authentication
+
+### 📋 Deployed Contract Addresses (Flow Testnet)
+
+| Contract | Address | Description |
+|----------|---------|-------------|
+| **FlowDEX** | `0x18f0d1d9cfa52c6d` | Main DEX contract with AMM functionality |
+| **TestToken** | `0x18f0d1d9cfa52c6d` | Test token (FLOW demo) |
+| **TestToken2** | `0x0ea4b4ea56a1260c` | Test token (USDC demo) |
+| **FungibleToken** | `0x9a0766d93b6608b7` | Flow standard fungible token interface |
+
+**🔗 View on Flowscan:**
+- [FlowDEX Contract](https://testnet.flowscan.org/account/18f0d1d9cfa52c6d)
+- [TestToken Contract](https://testnet.flowscan.org/account/18f0d1d9cfa52c6d)
+- [TestToken2 Contract](https://testnet.flowscan.org/account/0ea4b4ea56a1260c)
 
 ## Features
 
@@ -110,19 +132,9 @@ flow accounts add-contract --network testnet --signer <account> ./cadence/contra
 - Access node endpoints
 - Wallet discovery settings
 
-## Deployed Contracts
+## Contract Details
 
-### Flow Testnet Addresses
-- **FlowDEX**: `0x18f0d1d9cfa52c6d` 
-- **TestToken**: `0x18f0d1d9cfa52c6d`
-- **TestToken2**: `0x0ea4b4ea56a1260c`
-- **FungibleToken**: `0x9a0766d93b6608b7` (Flow standard)
-
-### Contract Verification
-You can verify the deployed contracts on Flow testnet:
-- FlowDEX: [View on Flowscan](https://testnet.flowscan.org/account/18f0d1d9cfa52c6d)
-- TestToken: [View on Flowscan](https://testnet.flowscan.org/account/18f0d1d9cfa52c6d)
-- TestToken2: [View on Flowscan](https://testnet.flowscan.org/account/0ea4b4ea56a1260c)
+All contracts are deployed on **Flow testnet** and can be verified using the links above. The contracts implement the Flow blockchain standards and are fully compatible with the Flow ecosystem.
 
 ## Smart Contract Details
 
