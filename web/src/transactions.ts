@@ -160,9 +160,11 @@ import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
   let account = getAccount(addr)
-  let cap = account.getCapability<&{FungibleToken.Balance}>(/public/DemoFLOWBalance)
-  if !cap.check() { return 0.0 }
-  let ref = cap.borrow() ?? panic("Missing DemoFLOWBalance capability")
+  let cap = account.getCapability(/public/DemoFLOWBalance)
+  if !cap.check() { 
+    return 0.0 
+  }
+  let ref = cap.borrow<&{FungibleToken.Balance}>() ?? panic("Missing DemoFLOWBalance capability")
   return ref.balance
 }
 `
@@ -172,9 +174,11 @@ import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
   let account = getAccount(addr)
-  let cap = account.getCapability<&{FungibleToken.Balance}>(/public/DemoUSDCBalance)
-  if !cap.check() { return 0.0 }
-  let ref = cap.borrow() ?? panic("Missing DemoUSDCBalance capability")
+  let cap = account.getCapability(/public/DemoUSDCBalance)
+  if !cap.check() { 
+    return 0.0 
+  }
+  let ref = cap.borrow<&{FungibleToken.Balance}>() ?? panic("Missing DemoUSDCBalance capability")
   return ref.balance
 }
 `
