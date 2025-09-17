@@ -670,6 +670,7 @@ const App: React.FC = () => {
       console.log('Transaction completed, adding balance...');
       
       // Refresh on-chain balances
+      await new Promise((r) => setTimeout(r, 700));
       await addBalance();
       
       console.log('Balance added, showing success message...');

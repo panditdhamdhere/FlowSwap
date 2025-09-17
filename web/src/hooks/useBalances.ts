@@ -21,12 +21,18 @@ export function useBalances() {
     setError(null)
     try {
       await ensureBalanceCaps().catch(() => {})
-      const [flowBal, usdcBal] = await Promise.all([
-        getDemoFlowBalance(userAddress) as Promise<string>,
-        getDemoUSDCBalance(userAddress) as Promise<string>,
-      ])
-      const flowNum = parseFloat(flowBal || '0') || 0
-      const usdcNum = parseFloat(usdcBal || '0') || 0
+      let flowNum = 0
+      let usdcNum = 0
+      for (let i = 0; i < 5; i++) {
+        const [flowBal, usdcBal] = await Promise.all([
+          getDemoFlowBalance(userAddress) as Promise<string>,
+          getDemoUSDCBalance(userAddress) as Promise<string>,
+        ])
+        flowNum = parseFloat(flowBal || '0') || 0
+        usdcNum = parseFloat(usdcBal || '0') || 0
+        if (flowNum > 0 || usdcNum > 0) break
+        await new Promise((r) => setTimeout(r, 800))
+      }
       setBalances({
         flow: flowNum.toLocaleString(undefined, { maximumFractionDigits: 6 }),
         usdc: usdcNum.toLocaleString(undefined, { maximumFractionDigits: 6 })

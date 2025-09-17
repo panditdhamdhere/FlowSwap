@@ -153,7 +153,7 @@ const SETUP_VAULTS_TX = ENSURE_BALANCE_CAPS_TX
 
 export async function setupDemoTokenVaults() {
   const txId = await fcl.mutate({ cadence: SETUP_VAULTS_TX, limit: 9999 })
-  await fcl.tx(txId).onceSealed()
+  await waitForSeal(txId)
   return txId
 }
 
@@ -189,7 +189,7 @@ export async function mintTestToken(amount: number = 1000) {
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
     limit: 9999
   })
-  await fcl.tx(txId).onceSealed()
+  await waitForSeal(txId)
   return txId
 }
 
@@ -200,7 +200,7 @@ export async function mintTestToken2(amount: number = 1000) {
     args: (arg, t) => [arg(amount.toFixed(1), t.UFix64)],
     limit: 9999
   })
-  await fcl.tx(txId).onceSealed()
+  await waitForSeal(txId)
   return txId
 }
 
@@ -234,7 +234,7 @@ export async function swapAForB(_amountIn: number, _minAmountOut: number = 0) {
     ],
     limit: 9999
   })
-  await fcl.tx(txId).onceSealed()
+  await waitForSeal(txId)
   return txId
 }
 
@@ -247,8 +247,24 @@ export async function swapBForA(_amountIn: number, _minAmountOut: number = 0) {
     ],
     limit: 9999
   })
-  await fcl.tx(txId).onceSealed()
+  await waitForSeal(txId)
   return txId
+}
+
+// Polling-based sealing to avoid occasional WebSocket issues
+async function waitForSeal(txId: string, maxTries: number = 60, intervalMs: number = 1000) {
+  for (let i = 0; i < maxTries; i++) {
+    try {
+      const res = await fcl.tx(txId).snapshot()
+      // 4 = SEALED, 5 = EXPIRED; treat 4 as success
+      if (res?.status === 4) return res
+      if (res?.status === 5) throw new Error('Transaction expired')
+    } catch (_) {
+      // ignore transient errors and keep polling
+    }
+    await new Promise((r) => setTimeout(r, intervalMs))
+  }
+  throw new Error('Timeout waiting for transaction to seal')
 }
 
 export async function getPrices() {
