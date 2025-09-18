@@ -644,6 +644,25 @@ const App: React.FC = () => {
     txId?: string;
   };
   const [recent, setRecent] = useState<RecentActivity[]>([]);
+  const [showTxModal, setShowTxModal] = useState<boolean>(false);
+
+  // Load recent from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('flowswap_recent');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setRecent(parsed as RecentActivity[]);
+      }
+    } catch {}
+  }, []);
+
+  // Persist recent to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('flowswap_recent', JSON.stringify(recent));
+    } catch {}
+  }, [recent]);
 
   const handleSwap = async (amountA: number, amountB: number, direction: 'AtoB' | 'BtoA') => {
     try {
@@ -779,6 +798,12 @@ const App: React.FC = () => {
             
             <div className="flex items-center space-x-4">
             <ThemeToggle />
+              <button
+                onClick={() => setShowTxModal(true)}
+                className="px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                Transactions
+              </button>
             <Connect />
           </div>
           </div>
@@ -804,6 +829,56 @@ const App: React.FC = () => {
           </div>
           </div>
         )}
+        {/* Transactions Modal */}
+        <AnimatePresence>
+          {showTxModal && (
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-lg p-6"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Transactions</h4>
+                  <button onClick={() => setShowTxModal(false)} className="text-sm px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">Close</button>
+              </div>
+                {recent.length === 0 ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">No recent transactions.</div>
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-auto pr-1">
+                    {recent.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div className="text-sm text-gray-700 dark:text-gray-200">
+                          <div className="font-semibold">{r.direction === 'AtoB' ? 'FLOW → USDC' : 'USDC → FLOW'}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(r.time).toLocaleString()}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{r.amountIn.toFixed(4)} in • min {r.minAmountOut.toFixed(4)} out</div>
+            </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-xs font-medium ${r.status === 'completed' ? 'text-green-500' : r.status === 'submitted' ? 'text-yellow-600' : 'text-red-500'}`}>{r.status}</span>
+                          {r.txId && (
+                            <a
+                              href={`https://testnet.flowscan.org/transaction/${r.txId}`}
+                              target="_blank" rel="noreferrer"
+                              className="text-xs underline text-blue-600 dark:text-blue-400"
+                            >
+                              View
+                            </a>
+                          )}
+          </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <motion.div 
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }} 
@@ -835,7 +910,7 @@ const App: React.FC = () => {
                             <div className="text-sm text-gray-700 dark:text-gray-200">
                               <div className="font-semibold">{r.direction === 'AtoB' ? 'FLOW → USDC' : 'USDC → FLOW'}</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400">{r.amountIn.toFixed(4)} in • min {r.minAmountOut.toFixed(4)} out</div>
-                            </div>
+          </div>
                             <div className="flex items-center gap-3">
                               <span className={`text-xs font-medium ${r.status === 'submitted' ? 'text-green-500' : 'text-red-500'}`}>{r.status}</span>
                               {r.txId && (
@@ -847,17 +922,17 @@ const App: React.FC = () => {
                                   View
                                 </a>
                               )}
-                            </div>
+          </div>
                           </div>
                         ))}
                       </div>
                     )}
                   </Card>
-                </div>
+        </div>
 
           {/* Right Column - Trading Interface */}
           <div className="lg:col-span-2">
-          <motion.div
+        <motion.div 
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -901,7 +976,7 @@ const App: React.FC = () => {
               <div className="p-6">
                 <AnimatePresence mode="wait">
                   {activeTab === 'swap' ? (
-                    <motion.div
+          <motion.div
                       key="swap"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
