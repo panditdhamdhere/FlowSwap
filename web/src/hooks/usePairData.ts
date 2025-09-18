@@ -138,9 +138,8 @@ export function usePairData() {
 
   useEffect(() => {
     fetchPairData()
-    
-    // Refresh every 5 seconds for real-time updates
-    const interval = setInterval(fetchPairData, 5000)
+    // Throttle pool refresh to every 15 seconds
+    const interval = setInterval(fetchPairData, 15000)
     return () => clearInterval(interval)
   }, [])
 

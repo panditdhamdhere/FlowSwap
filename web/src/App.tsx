@@ -635,16 +635,18 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Periodic auto-refresh for balances and pair data
+  // Periodic auto-refresh for balances only (when wallet connected)
+  const userAddress = useAppStore((s) => s.userAddress);
   useEffect(() => {
     const refresh = () => {
-      try { refetchBalances(); } catch {}
-      try { refetchPairData(); } catch {}
+      if (userAddress) {
+        try { refetchBalances(); } catch {}
+      }
     };
     refresh();
-    const interval = setInterval(refresh, 8000);
+    const interval = setInterval(refresh, 10000);
     return () => clearInterval(interval);
-  }, [refetchBalances, refetchPairData]);
+  }, [refetchBalances, userAddress]);
   type RecentActivity = {
     id: string;
     time: number;
