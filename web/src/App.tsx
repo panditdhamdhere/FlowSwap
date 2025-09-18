@@ -13,11 +13,11 @@ const ThemeToggle: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
 
   return (
-    <motion.button 
+          <motion.button 
       onClick={toggleTheme}
       className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
     >
       {isDark ? (
         <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -35,10 +35,120 @@ const ThemeToggle: React.FC = () => {
   );
 };
 
+// Wallet Selection Modal Component
+const WalletSelector: React.FC<{ isOpen: boolean; onClose: () => void; onSelect: (wallet: string) => void }> = ({ isOpen, onClose, onSelect }) => {
+  const wallets = [
+    {
+      id: 'blocto',
+      name: 'Blocto',
+      description: 'Popular Flow wallet with easy onboarding',
+      icon: '🔵',
+      color: 'bg-blue-500'
+    },
+    {
+      id: 'lilico',
+      name: 'Lilico',
+      description: 'Lightweight wallet for Flow ecosystem',
+      icon: '🟣',
+      color: 'bg-purple-500'
+    },
+    {
+      id: 'dapper',
+      name: 'Dapper',
+      description: 'Enterprise-grade Flow wallet',
+      icon: '🟢',
+      color: 'bg-green-500'
+    }
+  ];
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+    <motion.div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div 
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md p-6"
+            initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Connect Wallet</h3>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+        </div>
+        
+            <div className="space-y-3">
+              {wallets.map((wallet) => (
+          <motion.button 
+                  key={wallet.id}
+                  onClick={() => onSelect(wallet.id)}
+                  className="w-full p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
+          whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-12 h-12 rounded-xl ${wallet.color} flex items-center justify-center text-white text-xl`}>
+                      {wallet.icon}
+          </div>
+                    <div>
+                      <div className="font-semibold text-gray-800 dark:text-gray-200">{wallet.name}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{wallet.description}</div>
+                    </div>
+                  </div>
+          </motion.button>
+              ))}
+            </div>
+            
+            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-start space-x-2">
+                <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <div className="font-medium">Network: Flow Testnet</div>
+                  <div>Make sure you're connected to the correct network</div>
+          </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// Network Status Component
+const NetworkStatus: React.FC = () => {
+  const network = useAppStore((s) => s.network);
+  
+  return (
+    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+      <span className="text-xs font-medium text-green-700 dark:text-green-300">
+        {network === 'testnet' ? 'Flow Testnet' : 'Flow Mainnet'}
+      </span>
+    </div>
+  );
+};
+
 // Connect Wallet Component
 const Connect: React.FC = () => {
   const [user, setUser] = useState<{ loggedIn: boolean; addr: string | null }>({ loggedIn: false, addr: null });
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showWalletSelector, setShowWalletSelector] = useState(false);
+  const currentWallet = useAppStore((s) => s.currentWallet);
+  const setCurrentWallet = useAppStore((s) => s.setCurrentWallet);
   const setUserAddress = useAppStore((s) => s.setUserAddress);
 
   useEffect(() => {
@@ -52,23 +162,21 @@ const Connect: React.FC = () => {
     });
   }, []);
 
-  const handleConnect = async () => {
+  const handleWalletSelect = async (walletId: string) => {
+    setCurrentWallet(walletId);
+    setShowWalletSelector(false);
     setIsConnecting(true);
+    
     try {
-      if (user.loggedIn) {
-        fcl.unauthenticate();
-        setUserAddress(null);
-      } else {
-        // Add timeout to prevent hanging
-        const authPromise = fcl.authenticate();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Connection timeout')), 30000)
-        );
-        await Promise.race([authPromise, timeoutPromise]);
-        // After successful auth, fetch current user and update store
-        const current = await fcl.currentUser.snapshot();
-        setUserAddress(current?.addr || null);
-      }
+      // Add timeout to prevent hanging
+      const authPromise = fcl.authenticate();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 30000)
+      );
+      await Promise.race([authPromise, timeoutPromise]);
+      // After successful auth, fetch current user and update store
+      const current = await fcl.currentUser.snapshot();
+      setUserAddress(current?.addr || null);
     } catch (error) {
       console.error('Wallet connection error:', error);
       // Show user-friendly error message
@@ -80,40 +188,72 @@ const Connect: React.FC = () => {
     }
   };
 
+  const handleConnect = async () => {
+    if (user.loggedIn) {
+      setIsConnecting(true);
+      try {
+        fcl.unauthenticate();
+        setUserAddress(null);
+    } finally {
+        setIsConnecting(false);
+      }
+    } else {
+      setShowWalletSelector(true);
+    }
+  };
+
+  const getWalletInfo = (walletId: string) => {
+    const wallets = {
+      blocto: { name: 'Blocto', icon: '🔵' },
+      lilico: { name: 'Lilico', icon: '🟣' },
+      dapper: { name: 'Dapper', icon: '🟢' }
+    };
+    return wallets[walletId as keyof typeof wallets] || { name: 'Unknown', icon: '🔵' };
+  };
+
   return (
-          <motion.button 
-      onClick={handleConnect}
-      disabled={isConnecting}
-      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-      whileHover={{ scale: isConnecting ? 1 : 1.05, y: isConnecting ? 0 : -2 }}
-      whileTap={{ scale: isConnecting ? 1 : 0.95 }}
-    >
-      {isConnecting ? (
-        <div className="flex items-center gap-2">
-          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Connecting...
+    <>
+            <motion.button
+        onClick={handleConnect}
+        disabled={isConnecting}
+        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        whileHover={{ scale: isConnecting ? 1 : 1.05, y: isConnecting ? 0 : -2 }}
+        whileTap={{ scale: isConnecting ? 1 : 0.95 }}
+      >
+        {isConnecting ? (
+          <div className="flex items-center gap-2">
+            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Connecting...
         </div>
-      ) : user.loggedIn ? (
-        <span className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-          {user.addr ? `${user.addr.slice(0, 6)}...${user.addr.slice(-4)}` : 'Connected'}
-        </span>
-      ) : (
-        'Connect Wallet'
-      )}
-    </motion.button>
+        ) : user.loggedIn ? (
+          <span className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            <span className="text-sm">{getWalletInfo(currentWallet).icon}</span>
+            {user.addr ? `${user.addr.slice(0, 6)}...${user.addr.slice(-4)}` : 'Connected'}
+          </span>
+        ) : (
+          'Connect Wallet'
+        )}
+      </motion.button>
+      
+      <WalletSelector 
+        isOpen={showWalletSelector}
+        onClose={() => setShowWalletSelector(false)}
+        onSelect={handleWalletSelect}
+      />
+    </>
   );
 };
 
 // Card Component
 const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <motion.div 
+          <motion.div 
     className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 ${className}`}
     initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
     {children}
@@ -133,7 +273,7 @@ const Input: React.FC<{
     {label && (
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
         {label}
-      </label>
+          </label>
     )}
     <div className="relative">
       <input
@@ -148,9 +288,9 @@ const Input: React.FC<{
           <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
             {token}
           </span>
-        </div>
+          </div>
       )}
-    </div>
+        </div>
   </div>
 );
 
@@ -168,7 +308,7 @@ const Button: React.FC<{
     ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl" 
     : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600";
 
-  return (
+    return (
     <motion.button 
       onClick={onClick}
       disabled={disabled || loading}
@@ -176,7 +316,7 @@ const Button: React.FC<{
       whileHover={{ scale: disabled ? 1 : 1.05, y: disabled ? 0 : -2 }}
       whileTap={{ scale: disabled ? 1 : 0.95 }}
             >
-              {loading ? (
+            {loading ? (
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           Loading...
@@ -321,7 +461,7 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
           </button>
         </div>
         <div className="flex justify-center">
-          <motion.div 
+          <motion.div
             className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full"
             whileHover={{ rotate: 180 }}
             transition={{ duration: 0.3 }}
@@ -340,10 +480,10 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">To</label>
             <div className="relative">
               <input
-            type="number"
+                  type="number"
                 value={(loadingQuote ? 0 : quote).toFixed(6)}
             readOnly
-            placeholder="0.0"
+                  placeholder="0.0"
                 className="w-full px-4 py-3 pr-16 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -359,12 +499,12 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Route: {direction === 'AtoB' ? 'FLOW → USDC' : 'USDC → FLOW'}
             </div>
-          </div>
-        
+              </div>
+              
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Slippage (%)</label>
           <input
-            type="number"
+              type="number"
             min={0}
             step={0.1}
             value={slippage}
@@ -386,25 +526,25 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
                 {p}%
               </button>
             ))}
-          </div>
+              </div>
         </div>
-        <Button 
+            <Button 
           onClick={() => setShowConfirm(true)} 
           className="w-full"
           disabled={quote === 0}
         >
           {quote === 0 ? 'No Liquidity' : 'Swap Tokens'}
-        </Button>
-        </div>
+            </Button>
+      </div>
         <AnimatePresence>
           {showConfirm && (
-        <motion.div
+        <motion.div 
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-            >
-                <motion.div
+        >
+          <motion.div
                 className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md p-6"
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -444,10 +584,10 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
                   </button>
                 </div>
           </motion.div>
-          </motion.div>
+        </motion.div>
             )}
         </AnimatePresence>
-    </Card>
+      </Card>
   );
 };
 
@@ -462,7 +602,7 @@ const LiquidityInterface: React.FC<{ onLiquidity: (amountA: number, amountB: num
     onLiquidity(numAmountA, numAmountB);
   };
 
-  return (
+    return (
     <Card>
       <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Add Liquidity</h3>
               <div className="space-y-4">
@@ -483,8 +623,8 @@ const LiquidityInterface: React.FC<{ onLiquidity: (amountA: number, amountB: num
         <Button onClick={handleLiquidity} className="w-full">
           Add Liquidity
             </Button>
-              </div>
-    </Card>
+        </div>
+      </Card>
   );
 };
 
@@ -810,6 +950,7 @@ const App: React.FC = () => {
           </motion.div>
             
             <div className="flex items-center space-x-4">
+            <NetworkStatus />
             <ThemeToggle />
               <button
                 onClick={() => setShowTxModal(true)}

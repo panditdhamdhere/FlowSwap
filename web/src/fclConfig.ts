@@ -12,7 +12,11 @@ const testnet = {
   accessNode: 'https://rest-testnet.onflow.org',
   discovery: 'https://fcl-discovery.onflow.org/testnet/authn',
   wallet: 'https://fcl-discovery.onflow.org/testnet/authn',
-  discoveryInclude: ['0x82ec283f88a62e65'], // Blocto wallet for faster connection
+  discoveryInclude: [
+    '0x82ec283f88a62e65', // Blocto
+    '0x82ec283f88a62e65', // Lilico (same as Blocto for now)
+    '0x82ec283f88a62e65'  // Dapper (same as Blocto for now)
+  ],
   network: 'testnet',
 }
 
