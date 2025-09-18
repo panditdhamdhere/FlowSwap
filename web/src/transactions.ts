@@ -159,6 +159,7 @@ const GET_DEMOFLOW_BALANCE_SCRIPT = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
+  // Cache bust: ${Date.now()}
   let account = getAccount(addr)
   let cap = account.getCapability(/public/DemoFLOWBalance)
   if !cap.check() { 
@@ -173,6 +174,7 @@ const GET_DEMOUSDC_BALANCE_SCRIPT = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
+  // Cache bust: ${Date.now()}
   let account = getAccount(addr)
   let cap = account.getCapability(/public/DemoUSDCBalance)
   if !cap.check() { 
@@ -185,6 +187,7 @@ access(all) fun main(addr: Address): UFix64 {
 
 export async function getDemoFlowBalance(address: string) {
   try {
+    console.log('Using script version:', Date.now())
     const result = await retry(() => fcl.query({
       cadence: GET_DEMOFLOW_BALANCE_SCRIPT,
       args: (arg, t) => [arg(address, t.Address)]
@@ -199,6 +202,7 @@ export async function getDemoFlowBalance(address: string) {
 
 export async function getDemoUSDCBalance(address: string) {
   try {
+    console.log('Using USDC script version:', Date.now())
     const result = await retry(() => fcl.query({
       cadence: GET_DEMOUSDC_BALANCE_SCRIPT,
       args: (arg, t) => [arg(address, t.Address)]
