@@ -36,19 +36,14 @@ transaction(amountA: UFix64, amountB: UFix64) {
         let usdcVault = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault)
             ?? panic("DemoUSDC vault not found")
         
-        // Withdraw tokens from user's vaults
+        // Withdraw tokens from user's vaults and simulate transfer to DEX by destroying
         let flowTokens <- flowVault.withdraw(amount: amountA)
         let usdcTokens <- usdcVault.withdraw(amount: amountB)
-        
-        // Destroy the withdrawn tokens (simulating transfer to DEX)
         destroy flowTokens
         destroy usdcTokens
-        
-        log("Transferred tokens to DEX: FLOW=".concat(amountA.toString()).concat(" USDC=").concat(amountB.toString()))
     }
 
     execute {
-        // Add liquidity to the DEX
         let liquidity = FlowDEX.addLiquidity(amountA: amountA, amountB: amountB)
         log("Added liquidity: ".concat(liquidity.toString()))
     }
@@ -63,25 +58,16 @@ import DemoUSDC from ${DEMO_USDC_ADDRESS}
 
 transaction(amountIn: UFix64, minAmountOut: UFix64) {
     prepare(acct: AuthAccount) {
-        // Get vault references
+        // Withdraw input tokens (FLOW) and simulate transfer by destroying
         let flowVault = acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault)
             ?? panic("DemoFLOW vault not found")
-        let usdcVault = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault)
-            ?? panic("DemoUSDC vault not found")
-        
-        // Withdraw input tokens (FLOW)
         let flowTokens <- flowVault.withdraw(amount: amountIn)
         destroy flowTokens
-        
-        log("Swapping FLOW to USDC: amountIn=".concat(amountIn.toString()))
     }
 
     execute {
         let out = FlowDEX.swapAForB(amountIn: amountIn, minAmountOut: minAmountOut)
         log("Swap result: ".concat(out.toString()))
-        
-        // Note: In a real DEX, we would deposit the output tokens back to user's vault
-        // For this demo, the DEX contract handles the token accounting
     }
 }
 `
@@ -94,25 +80,16 @@ import DemoUSDC from ${DEMO_USDC_ADDRESS}
 
 transaction(amountIn: UFix64, minAmountOut: UFix64) {
     prepare(acct: AuthAccount) {
-        // Get vault references
-        let flowVault = acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault)
-            ?? panic("DemoFLOW vault not found")
+        // Withdraw input tokens (USDC) and simulate transfer by destroying
         let usdcVault = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault)
             ?? panic("DemoUSDC vault not found")
-        
-        // Withdraw input tokens (USDC)
         let usdcTokens <- usdcVault.withdraw(amount: amountIn)
         destroy usdcTokens
-        
-        log("Swapping USDC to FLOW: amountIn=".concat(amountIn.toString()))
     }
 
     execute {
         let out = FlowDEX.swapBForA(amountIn: amountIn, minAmountOut: minAmountOut)
         log("Swap result: ".concat(out.toString()))
-        
-        // Note: In a real DEX, we would deposit the output tokens back to user's vault
-        // For this demo, the DEX contract handles the token accounting
     }
 }
 `
@@ -327,21 +304,14 @@ import DemoUSDC from ${DEMO_USDC_ADDRESS}
 
 transaction(percent: UFix64) {
   prepare(acct: AuthAccount) {
-    // Get vault references
-    let flowVault = acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault)
-        ?? panic("DemoFLOW vault not found")
-    let usdcVault = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault)
-        ?? panic("DemoUSDC vault not found")
-    
-    log("Removing liquidity: percent=".concat(percent.toString()))
+    // ensure vaults exist
+    let _ = acct.borrow<&DemoFLOW.Vault>(from: /storage/DemoFLOWVault) ?? panic("DemoFLOW vault not found")
+    let _ = acct.borrow<&DemoUSDC.Vault>(from: /storage/DemoUSDCVault) ?? panic("DemoUSDC vault not found")
   }
 
   execute {
     let outs = FlowDEX.removeLiquidity(percent: percent)
     log("Removed liquidity: FLOW=".concat(outs[0].toString()).concat(" USDC=").concat(outs[1].toString()))
-    
-    // Note: In a real DEX, we would mint/deposit the returned tokens back to user's vault
-    // For this demo, the DEX contract handles the token accounting
   }
 }
 `
