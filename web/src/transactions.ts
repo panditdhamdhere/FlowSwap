@@ -155,7 +155,7 @@ export async function getReserves() {
 }
 
 // ===== Balances: public Balance cap scripts =====
-const GET_DEMOFLOW_BAL = `
+const GET_DEMOFLOW_BALANCE_SCRIPT = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
@@ -169,7 +169,7 @@ access(all) fun main(addr: Address): UFix64 {
 }
 `
 
-const GET_DEMOUSDC_BAL = `
+const GET_DEMOUSDC_BALANCE_SCRIPT = `
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
 access(all) fun main(addr: Address): UFix64 {
@@ -186,7 +186,7 @@ access(all) fun main(addr: Address): UFix64 {
 export async function getDemoFlowBalance(address: string) {
   try {
     const result = await retry(() => fcl.query({
-      cadence: GET_DEMOFLOW_BAL,
+      cadence: GET_DEMOFLOW_BALANCE_SCRIPT,
       args: (arg, t) => [arg(address, t.Address)]
     }))
     console.log('DemoFLOW balance query result:', result)
@@ -200,7 +200,7 @@ export async function getDemoFlowBalance(address: string) {
 export async function getDemoUSDCBalance(address: string) {
   try {
     const result = await retry(() => fcl.query({
-      cadence: GET_DEMOUSDC_BAL,
+      cadence: GET_DEMOUSDC_BALANCE_SCRIPT,
       args: (arg, t) => [arg(address, t.Address)]
     }))
     console.log('DemoUSDC balance query result:', result)
