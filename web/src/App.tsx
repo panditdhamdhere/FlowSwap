@@ -236,7 +236,7 @@ const PoolInfo: React.FC<{ pairData: any; onSeed?: () => void; hasLiquidity?: bo
           </div>
         </div>
       </div>
-      {onSeed && (pairData?.reserveA === 0 || pairData?.reserveB === 0) && (
+      {onSeed && (
         <div className="mt-4">
           <button
             onClick={onSeed}
@@ -634,6 +634,17 @@ const App: React.FC = () => {
     const interval = setInterval(checkLiquidity, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // Periodic auto-refresh for balances and pair data
+  useEffect(() => {
+    const refresh = () => {
+      try { refetchBalances(); } catch {}
+      try { refetchPairData(); } catch {}
+    };
+    refresh();
+    const interval = setInterval(refresh, 8000);
+    return () => clearInterval(interval);
+  }, [refetchBalances, refetchPairData]);
   type RecentActivity = {
     id: string;
     time: number;
