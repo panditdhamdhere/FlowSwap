@@ -66,20 +66,34 @@ web/public/masked-icon.svg
 *.bak
 *.backup
 
-# Private keys (security)
+# Private keys and sensitive files (SECURITY CRITICAL)
+*.pkey
+*.key
+*.private
+*.secret
 pandit.pkey
 p2.pkey
 testnet.pkey
-*.pkey
-*.key
+panditd.pkey
+panditd2.pkey
+emulator-account.pkey
+service-account.pkey
 
 # Flow specific sensitive files
 flow-minimal.json
 flow-accounts.json
 *.flow.json.backup
+flow.json.lock
+.flow/
+flow.db/
+flowdb/
+
+# Wallet and account files
+wallet.json
+accounts.json
+*.wallet
+*.account
 
 # IDE files
 Thumbs.db
 ehthumbs.db
-panditd.pkey
-panditd2.pkey
