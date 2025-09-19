@@ -72,19 +72,19 @@ const WalletSelector: React.FC<{ isOpen: boolean; onClose: () => void; onSelect:
           onClick={onClose}
         >
         <motion.div
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-72 max-h-[70vh] overflow-y-auto p-3 mx-4"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 w-64 max-h-[60vh] overflow-y-auto p-2 mx-4"
             initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Connect Wallet</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Connect Wallet</h3>
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -95,12 +95,12 @@ const WalletSelector: React.FC<{ isOpen: boolean; onClose: () => void; onSelect:
           <motion.button 
                   key={wallet.id}
                   onClick={() => onSelect(wallet.id)}
-                  className="w-full p-2 rounded-md border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
+                  className="w-full p-1.5 rounded border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                 >
                   <div className="flex items-center space-x-2">
-                    <div className={`w-7 h-7 rounded ${wallet.color} flex items-center justify-center text-white text-xs`}>
+                    <div className={`w-6 h-6 rounded ${wallet.color} flex items-center justify-center text-white text-xs`}>
                       {wallet.icon}
                     </div>
                     <div>
@@ -113,10 +113,10 @@ const WalletSelector: React.FC<{ isOpen: boolean; onClose: () => void; onSelect:
             </div>
             
             {/* Close button at bottom */}
-            <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-2 pt-1 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={onClose}
-                className="w-full px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xs"
+                className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xs"
               >
                 Cancel
               </button>
