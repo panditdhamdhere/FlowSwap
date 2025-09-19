@@ -69,12 +69,14 @@ const WalletSelector: React.FC<{ isOpen: boolean; onClose: () => void; onSelect:
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={onClose}
         >
         <motion.div
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm max-h-[90vh] overflow-y-auto p-6"
             initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Connect Wallet</h3>
@@ -108,6 +110,16 @@ const WalletSelector: React.FC<{ isOpen: boolean; onClose: () => void; onSelect:
                   </div>
           </motion.button>
               ))}
+            </div>
+            
+            {/* Close button at bottom */}
+            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={onClose}
+                className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
             </div>
             
           </motion.div>
