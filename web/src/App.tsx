@@ -70,10 +70,10 @@ const WalletSelector: React.FC<{ isOpen: boolean; onClose: () => void; onSelect:
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <motion.div 
+        <motion.div
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md p-6"
             initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+          animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
           >
             <div className="flex items-center justify-between mb-6">
@@ -122,7 +122,7 @@ const WalletSelector: React.FC<{ isOpen: boolean; onClose: () => void; onSelect:
               </div>
             </div>
           </motion.div>
-        </motion.div>
+      </motion.div>
       )}
     </AnimatePresence>
   );
@@ -211,7 +211,7 @@ const Connect: React.FC = () => {
     return wallets[walletId as keyof typeof wallets] || { name: 'Unknown', icon: '🔵' };
   };
 
-  return (
+    return (
     <>
             <motion.button
         onClick={handleConnect}
@@ -320,7 +320,7 @@ const Button: React.FC<{
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           Loading...
-        </div>
+          </div>
       ) : (
         children
       )}
@@ -390,10 +390,175 @@ const PoolInfo: React.FC<{ pairData: any; onSeed?: () => void; hasLiquidity?: bo
     </Card>
 );
 
+// Advanced Slippage Control Component
+const SlippageControl: React.FC<{
+  slippage: number;
+  onSlippageChange: (slippage: number) => void;
+  deadline: number;
+  onDeadlineChange: (deadline: number) => void;
+}> = ({ slippage, onSlippageChange, deadline, onDeadlineChange }) => {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [customSlippage, setCustomSlippage] = useState('');
+  const [customDeadline, setCustomDeadline] = useState('');
+
+  const slippagePresets = [0.1, 0.5, 1.0, 3.0];
+  const deadlinePresets = [10, 20, 30, 60]; // minutes
+
+  const handleSlippagePreset = (preset: number) => {
+    onSlippageChange(preset);
+    setCustomSlippage('');
+  };
+
+  const handleCustomSlippage = () => {
+    const value = parseFloat(customSlippage);
+    if (!isNaN(value) && value >= 0 && value <= 50) {
+      onSlippageChange(value);
+    }
+  };
+
+  const handleDeadlinePreset = (preset: number) => {
+    onDeadlineChange(preset);
+    setCustomDeadline('');
+  };
+
+  const handleCustomDeadline = () => {
+    const value = parseInt(customDeadline);
+    if (!isNaN(value) && value >= 1 && value <= 4320) { // max 3 days
+      onDeadlineChange(value);
+    }
+  };
+
+  const getSlippageWarning = (slippage: number) => {
+    if (slippage < 0.1) return { type: 'warning', message: 'Very low slippage may cause failed transactions' };
+    if (slippage > 5) return { type: 'error', message: 'High slippage may result in significant losses' };
+    if (slippage > 1) return { type: 'warning', message: 'Higher slippage tolerance' };
+    return null;
+  };
+
+  const slippageWarning = getSlippageWarning(slippage);
+
+  return (
+        <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Slippage Tolerance</span>
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          {showAdvanced ? 'Hide' : 'Advanced'}
+        </button>
+      </div>
+
+      {/* Slippage Presets */}
+      <div className="grid grid-cols-4 gap-2">
+        {slippagePresets.map((preset) => (
+          <button
+            key={preset}
+            onClick={() => handleSlippagePreset(preset)}
+            className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+              slippage === preset
+                ? 'bg-blue-500 text-white border-blue-500'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            {preset}%
+          </button>
+        ))}
+        </div>
+
+      {/* Custom Slippage Input */}
+      <div className="flex gap-2">
+        <input
+            type="number"
+          value={customSlippage}
+          onChange={(e) => setCustomSlippage(e.target.value)}
+          placeholder="Custom"
+          className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          min="0"
+          max="50"
+          step="0.1"
+        />
+        <button
+          onClick={handleCustomSlippage}
+          className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        >
+          Set
+        </button>
+        </div>
+
+      {/* Slippage Warning */}
+      {slippageWarning && (
+        <div className={`p-3 rounded-lg border ${
+          slippageWarning.type === 'error' 
+            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
+            : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+        }`}>
+          <div className="flex items-start space-x-2">
+            <svg className={`w-4 h-4 mt-0.5 ${
+              slippageWarning.type === 'error' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
+            }`} fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span className={`text-xs ${
+              slippageWarning.type === 'error' ? 'text-red-800 dark:text-red-200' : 'text-yellow-800 dark:text-yellow-200'
+            }`}>
+              {slippageWarning.message}
+            </span>
+            </div>
+        </div>
+      )}
+
+      {/* Advanced Settings */}
+      {showAdvanced && (
+        <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Transaction Deadline (minutes)
+          </label>
+            <div className="grid grid-cols-4 gap-2 mb-2">
+              {deadlinePresets.map((preset) => (
+                <button
+                  key={preset}
+                  onClick={() => handleDeadlinePreset(preset)}
+                  className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                    deadline === preset
+                      ? 'bg-blue-500 text-white border-blue-500'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {preset}m
+                </button>
+            ))}
+          </div>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={customDeadline}
+                onChange={(e) => setCustomDeadline(e.target.value)}
+                placeholder="Custom (minutes)"
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                min="1"
+                max="4320"
+              />
+              <button
+                onClick={handleCustomDeadline}
+                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Set
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Swap Interface Component
-const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number, direction: 'AtoB' | 'BtoA') => void; flowBalance?: number; usdcBalance?: number }> = ({ onSwap, flowBalance = 0, usdcBalance = 0 }) => {
+const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number, direction: 'AtoB' | 'BtoA', deadlineMinutes: number) => void; flowBalance?: number; usdcBalance?: number }> = ({ onSwap, flowBalance = 0, usdcBalance = 0 }) => {
   const [amountIn, setAmountIn] = useState('');
   const [slippage, setSlippage] = useState<number>(0.5);
+  const [deadline, setDeadline] = useState<number>(20); // minutes
   const [quote, setQuote] = useState<number>(0);
   const [loadingQuote, setLoadingQuote] = useState<boolean>(false);
   const [priceImpact, setPriceImpact] = useState<number>(0);
@@ -436,7 +601,7 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
     }
     
     const minOut = minReceived > 0 ? minReceived : 0;
-    onSwap(amtIn, minOut, direction);
+    onSwap(amtIn, minOut, direction, deadline);
   };
 
   return (
@@ -494,40 +659,55 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
               Min received ({slippage.toFixed(1)}%): <span className="font-semibold">{minReceived > 0 ? minReceived.toFixed(6) : '0.000000'} {direction === 'AtoB' ? 'USDC' : 'FLOW'}</span>
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400">
-              Price impact: <span className={`font-semibold ${priceImpact > 5 ? 'text-red-500' : ''}`}>{priceImpact.toFixed(2)}%</span>
-        </div>
+              Price impact: <span className={`font-semibold ${
+                priceImpact > 10 ? 'text-red-500' : 
+                priceImpact > 5 ? 'text-yellow-500' : 
+                'text-gray-600 dark:text-gray-400'
+              }`}>{priceImpact.toFixed(2)}%</span>
+              </div>
+              
+            {/* Price Impact Warning */}
+            {priceImpact > 5 && (
+              <div className={`p-3 rounded-lg border ${
+                priceImpact > 10 
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
+                  : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+              }`}>
+                <div className="flex items-start space-x-2">
+                  <svg className={`w-4 h-4 mt-0.5 ${
+                    priceImpact > 10 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
+                  }`} fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <div className={`text-xs font-medium ${
+                      priceImpact > 10 ? 'text-red-800 dark:text-red-200' : 'text-yellow-800 dark:text-yellow-200'
+                    }`}>
+                      {priceImpact > 10 ? 'High Price Impact!' : 'Price Impact Warning'}
+              </div>
+                    <div className={`text-xs ${
+                      priceImpact > 10 ? 'text-red-700 dark:text-red-300' : 'text-yellow-700 dark:text-yellow-300'
+                    }`}>
+                      {priceImpact > 10 
+                        ? 'This trade will significantly move the market price. Consider splitting into smaller trades.'
+                        : 'This trade will have a noticeable impact on the market price.'
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Route: {direction === 'AtoB' ? 'FLOW → USDC' : 'USDC → FLOW'}
             </div>
               </div>
               
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Slippage (%)</label>
-          <input
-              type="number"
-            min={0}
-            step={0.1}
-            value={slippage}
-            onChange={(e) => setSlippage(parseFloat(e.target.value) || 0)}
-            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-          />
-          <div className="flex gap-2 mt-1">
-            {[0.1, 0.5, 1, 2].map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setSlippage(p)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                  slippage === p
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {p}%
-              </button>
-            ))}
-              </div>
-        </div>
+        <SlippageControl 
+          slippage={slippage}
+          onSlippageChange={setSlippage}
+          deadline={deadline}
+          onDeadlineChange={setDeadline}
+        />
             <Button 
           onClick={() => setShowConfirm(true)} 
           className="w-full"
@@ -557,7 +737,12 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
                   <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Quote</span><span className="font-semibold text-gray-800 dark:text-gray-200">{quote.toFixed(6)} {direction === 'AtoB' ? 'USDC' : 'FLOW'}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Min received</span><span className="font-semibold text-gray-800 dark:text-gray-200">{minReceived > 0 ? minReceived.toFixed(6) : '0.000000'} {direction === 'AtoB' ? 'USDC' : 'FLOW'}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Slippage</span><span className="font-semibold text-gray-800 dark:text-gray-200">{slippage.toFixed(1)}%</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Price impact</span><span className={`font-semibold ${priceImpact > 5 ? 'text-red-500' : 'text-gray-800 dark:text-gray-200'}`}>{priceImpact.toFixed(2)}%</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Deadline</span><span className="font-semibold text-gray-800 dark:text-gray-200">{deadline} minutes</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Price impact</span><span className={`font-semibold ${
+                    priceImpact > 10 ? 'text-red-500' : 
+                    priceImpact > 5 ? 'text-yellow-500' : 
+                    'text-gray-800 dark:text-gray-200'
+                  }`}>{priceImpact.toFixed(2)}%</span></div>
                 </div>
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   <button 
@@ -817,7 +1002,7 @@ const App: React.FC = () => {
     } catch {}
   }, [recent]);
 
-  const handleSwap = async (amountA: number, amountB: number, direction: 'AtoB' | 'BtoA') => {
+  const handleSwap = async (amountA: number, amountB: number, direction: 'AtoB' | 'BtoA', deadlineMinutes: number = 20) => {
     try {
       // Check if DEX has liquidity before attempting swap
       if (!dexHasLiquidity) {
@@ -825,10 +1010,10 @@ const App: React.FC = () => {
         return;
       }
 
-      console.log(`Swapping ${direction}:`, { amountIn: amountA, minAmountOut: amountB });
+      console.log(`Swapping ${direction}:`, { amountIn: amountA, minAmountOut: amountB, deadlineMinutes });
       const txId = direction === 'AtoB' 
-        ? await swapAForB(amountA, amountB)
-        : await swapBForA(amountA, amountB);
+        ? await swapAForB(amountA, amountB, deadlineMinutes)
+        : await swapBForA(amountA, amountB, deadlineMinutes);
       setToast({ type: 'success', message: `Swap completed!`, txId: String(txId) });
       
       // Refresh balances and pair data after swap

@@ -326,7 +326,9 @@ export async function removeLiquidityPercent(percent: number) {
   return txId
 }
 
-export async function swapAForB(_amountIn: number, _minAmountOut: number = 0) {
+export async function swapAForB(_amountIn: number, _minAmountOut: number = 0, _deadlineMinutes: number = 20) {
+  // Note: deadline parameter is prepared for future contract upgrade
+  // const deadline = Math.floor(Date.now() / 1000) + (_deadlineMinutes * 60);
   const txId = await retry(() => fcl.mutate({
     cadence: SWAP_A_TO_B_TX,
     args: (arg, t) => [
@@ -339,7 +341,9 @@ export async function swapAForB(_amountIn: number, _minAmountOut: number = 0) {
   return txId
 }
 
-export async function swapBForA(_amountIn: number, _minAmountOut: number = 0) {
+export async function swapBForA(_amountIn: number, _minAmountOut: number = 0, _deadlineMinutes: number = 20) {
+  // Note: deadline parameter is prepared for future contract upgrade
+  // const deadline = Math.floor(Date.now() / 1000) + (_deadlineMinutes * 60);
   const txId = await retry(() => fcl.mutate({
     cadence: SWAP_B_TO_A_TX,
     args: (arg, t) => [
