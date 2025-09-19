@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
+import { useAutoSlippage } from './hooks/useAutoSlippage';
 import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2, seedLiquidity, hasLiquidity } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
@@ -339,13 +340,27 @@ const SlippageControl: React.FC<{
   onSlippageChange: (slippage: number) => void;
   deadline: number;
   onDeadlineChange: (deadline: number) => void;
-}> = ({ slippage, onSlippageChange, deadline, onDeadlineChange }) => {
+  amountIn?: number;
+  direction?: 'AtoB' | 'BtoA';
+}> = ({ slippage, onSlippageChange, deadline, onDeadlineChange, amountIn = 0, direction = 'AtoB' }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [customSlippage, setCustomSlippage] = useState('');
   const [customDeadline, setCustomDeadline] = useState('');
+  const [autoSlippageEnabled, setAutoSlippageEnabled] = useState(true);
 
   const slippagePresets = [0.1, 0.5, 1.0, 3.0];
   const deadlinePresets = [10, 20, 30, 60]; // minutes
+
+  // Auto-slippage calculation
+  const { recommendedSlippage, getSlippageRecommendation } = useAutoSlippage(amountIn, direction);
+  const slippageRecommendation = getSlippageRecommendation();
+
+  // Apply auto-slippage when enabled
+  useEffect(() => {
+    if (autoSlippageEnabled && amountIn > 0) {
+      onSlippageChange(recommendedSlippage);
+    }
+  }, [autoSlippageEnabled, recommendedSlippage, amountIn, onSlippageChange]);
 
   const handleSlippagePreset = (preset: number) => {
     onSlippageChange(preset);
@@ -390,6 +405,41 @@ const SlippageControl: React.FC<{
         >
           {showAdvanced ? 'Hide' : 'Advanced'}
         </button>
+      </div>
+
+      {/* Auto-slippage Toggle */}
+      <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="auto-slippage"
+              checked={autoSlippageEnabled}
+              onChange={(e) => setAutoSlippageEnabled(e.target.checked)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+            />
+            <label htmlFor="auto-slippage" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Auto-adjust slippage
+            </label>
+          </div>
+        </div>
+        {autoSlippageEnabled && (
+          <div className="text-right">
+            <div className={`text-xs font-semibold ${
+              slippageRecommendation.isHighRisk 
+                ? 'text-red-600 dark:text-red-400' 
+                : 'text-blue-600 dark:text-blue-400'
+            }`}>
+              {recommendedSlippage.toFixed(2)}%
+              {slippageRecommendation.isHighRisk && (
+                <span className="ml-1">⚠️</span>
+              )}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {slippageRecommendation.reasons[0]}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Slippage Presets */}
@@ -650,6 +700,8 @@ const SwapInterface: React.FC<{ onSwap: (amountIn: number, minAmountOut: number,
           onSlippageChange={setSlippage}
           deadline={deadline}
           onDeadlineChange={setDeadline}
+          amountIn={parseFloat(amountIn) || 0}
+          direction={direction}
         />
             <Button 
           onClick={() => setShowConfirm(true)} 
