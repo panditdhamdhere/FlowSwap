@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePairData } from './usePairData';
 
 export interface TradingPair {
@@ -115,6 +115,7 @@ export const useTradingPairs = () => {
   const [pairs, setPairs] = useState<TradingPair[]>(MOCK_PAIRS);
   const [selectedPairId, setSelectedPairId] = useState<string>('flow-usdc');
   const { pairData } = usePairData();
+  const lastUpdateRef = useRef<number>(0);
 
   // Get the currently selected pair
   const selectedPair = useMemo(() => {
@@ -136,17 +137,25 @@ export const useTradingPairs = () => {
     return [...activePairs].sort((a, b) => b.priceChange24h - a.priceChange24h);
   }, [activePairs]);
 
-  // Update pair data with real-time information
+  // Update pair data with real-time information (throttled)
   useEffect(() => {
     if (pairData && selectedPair) {
+      const now = Date.now();
+      // Only update if at least 3 seconds have passed since last update
+      if (now - lastUpdateRef.current < 3000) {
+        return;
+      }
+      
+      lastUpdateRef.current = now;
+      
       setPairs(prev => prev.map(pair => {
         if (pair.id === selectedPairId) {
           return {
             ...pair,
             liquidity: (pairData.reserveA + pairData.reserveB) * pairData.priceA,
-            // Update volume and price change based on real data
-            volume24h: pair.volume24h + Math.random() * 1000, // Simulate volume growth
-            priceChange24h: Math.random() * 10 - 5, // Simulate price change
+            // Update volume and price change based on real data (less frequently)
+            volume24h: pair.volume24h + Math.random() * 100, // Reduced volatility
+            priceChange24h: Math.random() * 2 - 1, // Reduced price change range
           };
         }
         return pair;

@@ -3,12 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
 import { useAutoSlippage } from './hooks/useAutoSlippage';
+import { usePortfolio } from './hooks/usePortfolio';
 import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2, seedLiquidity, hasLiquidity } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
 import PriceChart from './components/PriceChart';
 import PriceAlerts from './components/PriceAlerts';
 import PairSelector from './components/PairSelector';
+import LimitOrders from './components/LimitOrders';
+import Portfolio from './components/Portfolio';
 import * as fcl from '@onflow/fcl';
 import { useAppStore } from './store';
 
@@ -930,7 +933,8 @@ const FloatingElements: React.FC = () => (
 const App: React.FC = () => {
   const { pairData, refetch: refetchPairData } = usePairData();
   const { balances, refetch: refetchBalances } = useBalances();
-  const [activeTab, setActiveTab] = useState<'swap' | 'chart' | 'alerts' | 'liquidity' | 'remove'>('swap');
+  const { addTrade } = usePortfolio();
+  const [activeTab, setActiveTab] = useState<'swap' | 'chart' | 'alerts' | 'orders' | 'liquidity' | 'remove' | 'portfolio'>('swap');
   const [dexHasLiquidity, setDexHasLiquidity] = useState(false);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string; txId?: string } | null>(null);
@@ -1013,6 +1017,17 @@ const App: React.FC = () => {
         ? await swapAForB(amountA, amountB, deadlineMinutes)
         : await swapBForA(amountA, amountB, deadlineMinutes);
       setToast({ type: 'success', message: `Swap completed!`, txId: String(txId) });
+      
+      // Record trade in portfolio
+      const currentPrice = direction === 'AtoB' ? pairData?.priceA || 0 : pairData?.priceB || 0;
+      addTrade({
+        pairId: 'flow-usdc', // Default pair for now
+        type: direction === 'AtoB' ? 'buy' : 'sell',
+        amount: amountA,
+        price: currentPrice,
+        fees: amountA * 0.003, // 0.3% fee estimate
+        txHash: String(txId),
+      });
       
       // Refresh balances and pair data after swap
       refetchBalances();
@@ -1121,7 +1136,7 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
           <motion.div
-              className="flex items-center space-x-3"
+              className="flex items-center space-x-3 flex-shrink-0"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -1129,30 +1144,31 @@ const App: React.FC = () => {
               <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                 <Logo size={32} />
               </div>
-                     <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">FlowSwap</h1>
-          </motion.div>
+              <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">FlowSwap</h1>
+            </motion.div>
 
-          {/* Pair Selector */}
-          <motion.div
-            className="flex-1 max-w-xs mx-8"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <PairSelector />
+            {/* Pair Selector - Hidden on small screens */}
+            <motion.div
+              className="hidden lg:block flex-1 max-w-xs mx-4"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <PairSelector />
           </motion.div>
-            
-            <div className="flex items-center space-x-4">
-            <NetworkStatus />
+              
+            {/* Right side controls */}
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <NetworkStatus />
             <ThemeToggle />
               <button
                 onClick={() => setShowTxModal(true)}
-                className="px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                className="hidden sm:block px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
               >
                 Transactions
               </button>
             <Connect />
-          </div>
+            </div>
           </div>
           </div>
         </motion.header>
@@ -1318,6 +1334,16 @@ const App: React.FC = () => {
                   Alerts
                 </button>
                 <button
+                  onClick={() => setActiveTab('orders')}
+                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+                    activeTab === 'orders'
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Orders
+                </button>
+                <button
                   onClick={() => setActiveTab('liquidity')}
                   className={`flex-1 py-4 px-6 font-semibold transition-colors ${
                     activeTab === 'liquidity'
@@ -1336,6 +1362,16 @@ const App: React.FC = () => {
                   }`}
                 >
                   Remove
+                </button>
+                <button
+                  onClick={() => setActiveTab('portfolio')}
+                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+                    activeTab === 'portfolio'
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Portfolio
                 </button>
               </div>
 
@@ -1376,6 +1412,16 @@ const App: React.FC = () => {
                     >
                       <PriceAlerts />
                     </motion.div>
+                  ) : activeTab === 'orders' ? (
+                    <motion.div
+                      key="orders"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <LimitOrders />
+                    </motion.div>
                   ) : activeTab === 'liquidity' ? (
                     <motion.div
                       key="liquidity"
@@ -1386,6 +1432,16 @@ const App: React.FC = () => {
                     >
                       <LiquidityInterface onLiquidity={handleLiquidity} />
         </motion.div>
+                  ) : activeTab === 'portfolio' ? (
+                    <motion.div
+                      key="portfolio"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Portfolio />
+                    </motion.div>
                   ) : (
                     <motion.div
                       key="remove"
