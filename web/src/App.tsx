@@ -7,6 +7,7 @@ import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, m
 import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
 import PriceChart from './components/PriceChart';
+import PriceAlerts from './components/PriceAlerts';
 import * as fcl from '@onflow/fcl';
 import { useAppStore } from './store';
 
@@ -928,7 +929,7 @@ const FloatingElements: React.FC = () => (
 const App: React.FC = () => {
   const { pairData, refetch: refetchPairData } = usePairData();
   const { balances, refetch: refetchBalances } = useBalances();
-  const [activeTab, setActiveTab] = useState<'swap' | 'chart' | 'liquidity' | 'remove'>('swap');
+  const [activeTab, setActiveTab] = useState<'swap' | 'chart' | 'alerts' | 'liquidity' | 'remove'>('swap');
   const [dexHasLiquidity, setDexHasLiquidity] = useState(false);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string; txId?: string } | null>(null);
@@ -1296,6 +1297,16 @@ const App: React.FC = () => {
                   Chart
                 </button>
                 <button
+                  onClick={() => setActiveTab('alerts')}
+                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+                    activeTab === 'alerts'
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Alerts
+                </button>
+                <button
                   onClick={() => setActiveTab('liquidity')}
                   className={`flex-1 py-4 px-6 font-semibold transition-colors ${
                     activeTab === 'liquidity'
@@ -1344,6 +1355,16 @@ const App: React.FC = () => {
                     >
                       <PriceChart direction="AtoB" />
         </motion.div>
+                  ) : activeTab === 'alerts' ? (
+                    <motion.div
+                      key="alerts"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <PriceAlerts />
+                    </motion.div>
                   ) : activeTab === 'liquidity' ? (
                     <motion.div
                       key="liquidity"
