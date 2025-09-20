@@ -6,6 +6,7 @@ import { useAutoSlippage } from './hooks/useAutoSlippage';
 import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2, seedLiquidity, hasLiquidity } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
+import PriceChart from './components/PriceChart';
 import * as fcl from '@onflow/fcl';
 import { useAppStore } from './store';
 
@@ -927,7 +928,7 @@ const FloatingElements: React.FC = () => (
 const App: React.FC = () => {
   const { pairData, refetch: refetchPairData } = usePairData();
   const { balances, refetch: refetchBalances } = useBalances();
-  const [activeTab, setActiveTab] = useState<'swap' | 'liquidity' | 'remove'>('swap');
+  const [activeTab, setActiveTab] = useState<'swap' | 'chart' | 'liquidity' | 'remove'>('swap');
   const [dexHasLiquidity, setDexHasLiquidity] = useState(false);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string; txId?: string } | null>(null);
@@ -1285,6 +1286,16 @@ const App: React.FC = () => {
                   Swap
                 </button>
                 <button
+                  onClick={() => setActiveTab('chart')}
+                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+                    activeTab === 'chart'
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Chart
+                </button>
+                <button
                   onClick={() => setActiveTab('liquidity')}
                   className={`flex-1 py-4 px-6 font-semibold transition-colors ${
                     activeTab === 'liquidity'
@@ -1323,6 +1334,16 @@ const App: React.FC = () => {
                         usdcBalance={Number((balances?.usdc || '0').toString().replace(/,/g, ''))}
                       />
           </motion.div>
+                  ) : activeTab === 'chart' ? (
+                    <motion.div
+                      key="chart"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <PriceChart direction="AtoB" />
+        </motion.div>
                   ) : activeTab === 'liquidity' ? (
                     <motion.div
                       key="liquidity"
