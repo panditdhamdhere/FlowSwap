@@ -8,6 +8,7 @@ import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
 import PriceChart from './components/PriceChart';
 import PriceAlerts from './components/PriceAlerts';
+import PairSelector from './components/PairSelector';
 import * as fcl from '@onflow/fcl';
 import { useAppStore } from './store';
 
@@ -1130,6 +1131,16 @@ const App: React.FC = () => {
               </div>
                      <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">FlowSwap</h1>
           </motion.div>
+
+          {/* Pair Selector */}
+          <motion.div
+            className="flex-1 max-w-xs mx-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <PairSelector />
+          </motion.div>
             
             <div className="flex items-center space-x-4">
             <NetworkStatus />
@@ -1183,7 +1194,7 @@ const App: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Transactions</h4>
                   <button onClick={() => setShowTxModal(false)} className="text-sm px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">Close</button>
-              </div>
+        </div>
                 {recent.length === 0 ? (
                   <div className="text-sm text-gray-500 dark:text-gray-400">No recent transactions.</div>
                 ) : (
@@ -1268,7 +1279,7 @@ const App: React.FC = () => {
 
           {/* Right Column - Trading Interface */}
           <div className="lg:col-span-2">
-        <motion.div 
+          <motion.div
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
