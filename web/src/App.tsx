@@ -4,6 +4,7 @@ import { usePairData } from './hooks/usePairData';
 import { useBalances } from './hooks/useBalances';
 import { useAutoSlippage } from './hooks/useAutoSlippage';
 import { usePortfolio } from './hooks/usePortfolio';
+import { useNotifications } from './hooks/useNotifications';
 import { addLiquidity, swapAForB, swapBForA, getQuote, removeLiquidityPercent, mintTestToken, mintTestToken2, seedLiquidity, hasLiquidity } from './transactions';
 import { useTheme } from './contexts/ThemeContext';
 import { Logo } from './components/Logo';
@@ -13,6 +14,7 @@ import PairSelector from './components/PairSelector';
 import LimitOrders from './components/LimitOrders';
 import Portfolio from './components/Portfolio';
 import MarketDataWidget from './components/MarketDataWidget';
+import NotificationSettings from './components/NotificationSettings';
 import * as fcl from '@onflow/fcl';
 import { useAppStore } from './store';
 
@@ -958,6 +960,7 @@ const App: React.FC = () => {
   const { pairData, refetch: refetchPairData } = usePairData();
   const { balances, refetch: refetchBalances } = useBalances();
   const { addTrade } = usePortfolio();
+  const { showTradeNotification } = useNotifications();
   const [activeTab, setActiveTab] = useState<'swap' | 'chart' | 'alerts' | 'orders' | 'liquidity' | 'remove' | 'portfolio'>('swap');
   const [dexHasLiquidity, setDexHasLiquidity] = useState(false);
 
@@ -1042,6 +1045,15 @@ const App: React.FC = () => {
         : await swapBForA(amountA, amountB, deadlineMinutes);
       setToast({ type: 'success', message: `Swap completed!`, txId: String(txId) });
       
+      // Show push notification
+      await showTradeNotification('swap', {
+        from: direction === 'AtoB' ? 'FLOW' : 'USDC',
+        to: direction === 'AtoB' ? 'USDC' : 'FLOW',
+        amountIn: amountA,
+        amountOut: amountB,
+        txId: String(txId)
+      });
+      
       // Record trade in portfolio
       const currentPrice = direction === 'AtoB' ? pairData?.priceA || 0 : pairData?.priceB || 0;
       addTrade({
@@ -1077,6 +1089,12 @@ const App: React.FC = () => {
       console.log('Adding liquidity:', { amountA, amountB });
       await addLiquidity(amountA, amountB);
       setToast({ type: 'success', message: `Liquidity added!` });
+      
+      // Show push notification
+      await showTradeNotification('liquidity', {
+        action: 'Added',
+        amount: `${amountA} FLOW + ${amountB} USDC`
+      });
     } catch (error) {
       console.error('Add liquidity failed:', error);
       setToast({ type: 'error', message: 'Add liquidity failed' });
@@ -1289,6 +1307,7 @@ const App: React.FC = () => {
                 {/* Left Column - Pool Info */}
                 <div className="lg:col-span-1">
                   <MarketDataWidget className="mb-6" />
+                  <NotificationSettings className="mb-6" />
                   <PoolInfo pairData={pairData} onSeed={handleSeed} hasLiquidity={dexHasLiquidity} />
                   <Faucet onMint={handleMint} />
                   <UserBalances balances={balances} />

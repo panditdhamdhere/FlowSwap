@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePriceAlerts, type PriceAlert } from '../hooks/usePriceAlerts';
 import { usePriceHistory } from '../hooks/usePriceHistory';
+import { useNotifications } from '../hooks/useNotifications';
+import { useMarketData } from '../hooks/useMarketData';
 
 interface PriceAlertsProps {
   className?: string;
@@ -21,6 +23,8 @@ const PriceAlerts: React.FC<PriceAlertsProps> = ({ className = '' }) => {
   } = usePriceAlerts();
 
   const { currentPrice } = usePriceHistory('AtoB');
+  const { showPriceAlert, permission } = useNotifications();
+  const { getFlowData, getUSDCData } = useMarketData();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newAlert, setNewAlert] = useState({
     pair: 'AtoB' as 'AtoB' | 'BtoA',
@@ -31,23 +35,27 @@ const PriceAlerts: React.FC<PriceAlertsProps> = ({ className = '' }) => {
 
   // Check for triggered alerts every 5 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       const triggered = checkAlerts();
-      if (triggered.length > 0) {
-        // Show browser notification if permission granted
-        if (Notification.permission === 'granted') {
-          triggered.forEach(alert => {
-            new Notification('Price Alert Triggered!', {
-              body: alert.message || `${alert.pair} price ${alert.condition} ${alert.targetPrice}`,
-              icon: '/favicon.ico',
-            });
-          });
+      if (triggered.length > 0 && permission.granted) {
+        // Show enhanced notifications for each triggered alert
+        for (const alert of triggered) {
+          const coin = alert.pair === 'AtoB' ? 'FLOW' : 'USDC';
+          const marketData = alert.pair === 'AtoB' ? getFlowData() : getUSDCData();
+          const priceChange = marketData?.price_change_percentage_24h || 0;
+          
+          await showPriceAlert(
+            coin,
+            Number(alert.targetPrice),
+            priceChange,
+            alert.condition === 'above'
+          );
         }
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [checkAlerts]);
+  }, [checkAlerts, permission.granted, showPriceAlert, getFlowData, getUSDCData]);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -80,7 +88,7 @@ const PriceAlerts: React.FC<PriceAlertsProps> = ({ className = '' }) => {
     setShowCreateForm(false);
   };
 
-  const formatPrice = (price: number) => {
+  const formatAlertPrice = (price: number) => {
     return price.toFixed(6);
   };
 
@@ -195,7 +203,7 @@ const PriceAlerts: React.FC<PriceAlertsProps> = ({ className = '' }) => {
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Current price: {formatPrice(currentPrice)} {newAlert.pair === 'AtoB' ? 'USDC' : 'FLOW'}
+                  Current price: {formatAlertPrice(currentPrice)} {newAlert.pair === 'AtoB' ? 'USDC' : 'FLOW'}
                 </p>
               </div>
               
@@ -263,7 +271,7 @@ const PriceAlerts: React.FC<PriceAlertsProps> = ({ className = '' }) => {
                             {alert.pair === 'AtoB' ? 'FLOW/USDC' : 'USDC/FLOW'}
                           </span>
                           <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {alert.condition} {formatPrice(alert.targetPrice)}
+                            {alert.condition} {formatAlertPrice(alert.targetPrice)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">

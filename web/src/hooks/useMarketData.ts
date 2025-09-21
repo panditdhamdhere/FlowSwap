@@ -31,14 +31,14 @@ const RETRY_DELAY = 5000 // 5 seconds
 const MAX_RETRIES = 3
 
 interface CacheEntry {
-  data: MarketData | CoinGeckoResponse
+  data: MarketData[] | CoinGeckoResponse
   timestamp: number
 }
 
 class MarketDataCache {
   private cache = new Map<string, CacheEntry>()
 
-  get(key: string): MarketData | CoinGeckoResponse | null {
+  get(key: string): MarketData[] | CoinGeckoResponse | null {
     const entry = this.cache.get(key)
     if (!entry) return null
     
@@ -51,7 +51,7 @@ class MarketDataCache {
     return entry.data
   }
 
-  set(key: string, data: MarketData | CoinGeckoResponse): void {
+  set(key: string, data: MarketData[] | CoinGeckoResponse): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now()
@@ -94,7 +94,7 @@ export function useMarketData() {
     const cacheKey = `market-${coinIds.join(',')}`
     const cached = marketDataCache.get(cacheKey)
     
-    if (cached) {
+    if (cached && Array.isArray(cached)) {
       setMarketData(cached as MarketData[])
       return
     }
@@ -161,7 +161,7 @@ export function useMarketData() {
   }, [getCoinData])
 
   // Format price with appropriate decimals
-  const formatPrice = useCallback((price: number, decimals: number = 4): string => {
+  const formatPrice = useCallback((price: number, _decimals: number = 4): string => {
     if (price < 0.01) {
       return price.toFixed(6)
     } else if (price < 1) {
