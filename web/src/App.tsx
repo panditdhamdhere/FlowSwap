@@ -12,6 +12,7 @@ import PriceAlerts from './components/PriceAlerts';
 import PairSelector from './components/PairSelector';
 import LimitOrders from './components/LimitOrders';
 import Portfolio from './components/Portfolio';
+import MarketDataWidget from './components/MarketDataWidget';
 import * as fcl from '@onflow/fcl';
 import { useAppStore } from './store';
 
@@ -1180,6 +1181,11 @@ const App: React.FC = () => {
               <PairSelector />
           </motion.div>
               
+            {/* Market Data - Compact */}
+            <div className="hidden md:block flex-shrink-0">
+              <MarketDataWidget compact={true} />
+            </div>
+
             {/* Right side controls */}
             <div className="flex items-center space-x-2 flex-shrink-0">
               <NetworkStatus />
@@ -1282,6 +1288,7 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column - Pool Info */}
                 <div className="lg:col-span-1">
+                  <MarketDataWidget className="mb-6" />
                   <PoolInfo pairData={pairData} onSeed={handleSeed} hasLiquidity={dexHasLiquidity} />
                   <Faucet onMint={handleMint} />
                   <UserBalances balances={balances} />
