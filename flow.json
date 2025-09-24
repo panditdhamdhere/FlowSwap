@@ -62,14 +62,14 @@
 			"key": "11c5dfdeb0ff03a7a73ef39788563b62c89adea67bbb21c95eae0b5c9e9848e6"
 		},
 		"panditd": {
-			"address": "18f0d1d9cfa52c6d",
+			"address": "23a201af0549d3e0",
 			"key": {
 				"type": "file",
 				"location": "panditd.pkey"
 			}
 		},
 		"panditd2": {
-			"address": "0ea4b4ea56a1260c",
+			"address": "23a201af0549d3e0",
 			"key": {
 				"type": "file",
 				"location": "panditd2.pkey"
@@ -79,9 +79,7 @@
 	"deployments": {
 		"emulator": {
 			"emulator-account": [
-				"FlowDEX",
-				"TestToken",
-				"TestToken2"
+				"FlowDEX"
 			]
 		},
 		"testnet": {

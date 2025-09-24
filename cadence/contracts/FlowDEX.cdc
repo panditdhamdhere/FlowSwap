@@ -1,5 +1,5 @@
 // NOTE: Testnet FT address; update to emulator address when deploying locally
-import FungibleToken from 0x9a0766d93b6608b7
+import FungibleToken from 0xee82856bf20e2aa6
 
 access(all) contract FlowDEX {
 
